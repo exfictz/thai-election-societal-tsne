@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "app.js", "use": "@vercel/static" },
+    { "src": "vendor/tsne.js", "use": "@vercel/static" },
+    { "src": "data/districts.js", "use": "@vercel/static" },
+    { "src": "data/districts.csv", "use": "@vercel/static" },
+    { "src": "README.md", "use": "@vercel/static" }
+  ]
+}

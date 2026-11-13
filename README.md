@@ -15,6 +15,15 @@ python -m http.server 8000        # then http://127.0.0.1:8000
 
 or enable GitHub Pages on this repo (root of the default branch) to get a public URL.
 
+### Deploy on Vercel
+
+The repo root contains `requirements.txt` (for the data pipeline), which makes
+Vercel auto-detect a Python project and fail with "No python entrypoint found".
+`vercel.json` in this repo explicitly declares a static build (`@vercel/static`)
+of just the web-app files, which overrides that detection — push/redeploy and the
+app is served as a static site. (Alternatively, in the Vercel project settings set
+Framework Preset to "Other".)
+
 ## How it works
 
 1. Select one or more factors (median income, urbanisation via population density,
