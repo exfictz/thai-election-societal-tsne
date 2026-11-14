@@ -287,7 +287,7 @@
   var rows = global.PROVINCES;
   var state = {
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
-    perplexity: 12, nIter: 1000, learningRate: 200, seed: 42, k: 6,
+    perplexity: 35, nIter: 1000, learningRate: 100, seed: 42, k: 6,
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false,
     rightPositions: null, animating: false
@@ -320,11 +320,7 @@
       $(id + "-val").textContent = s.value;
       s.addEventListener("input", function () { state[key] = +s.value; $(id + "-val").textContent = s.value; });
     }
-    slider("perplexity", "perplexity", 5, 30, 1);
-    slider("niter", "nIter", 250, 2000, 50);
-    slider("lr", "learningRate", 50, 500, 10);
-    slider("seed", "seed", 1, 9999, 1);
-    slider("k", "k", 2, 15, 1);
+    slider("k", "k", 2, 6, 1);
 
     Array.prototype.forEach.call(document.querySelectorAll('input[name="colorby"]'), function (r) {
       r.checked = r.value === state.colorBy;
