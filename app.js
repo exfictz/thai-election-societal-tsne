@@ -236,56 +236,23 @@
     }).sort(function (a, b) { return b.size - a.size; });
   }
 
-  function cartogramLayout(rows, w, h, margin) {
+  var POINT_R = 5;
+
+  function mapLayout(rows, w, h, margin) {
     var lons = rows.map(function (r) { return r.lon; });
     var lats = rows.map(function (r) { return r.lat; });
     var lon0 = Math.min.apply(null, lons), lon1 = Math.max.apply(null, lons);
     var lat0 = Math.min.apply(null, lats), lat1 = Math.max.apply(null, lats);
     var latC = (lat0 + lat1) / 2 * Math.PI / 180;
     var spanX = (lon1 - lon0) * Math.cos(latC), spanY = lat1 - lat0;
-    var aspect = spanX / spanY;
-    var rowsN = Math.ceil(Math.sqrt(rows.length / aspect));
-    var colsN = Math.max(1, Math.ceil(rowsN * aspect));
-    while (rowsN * colsN < rows.length) colsN++;
     var availW = w - 2 * margin, availH = h - 2 * margin;
-    var cellW = availW / colsN, cellH = availH / rowsN;
-    var cell = Math.min(cellW, cellH);
-    var gridW = cell * colsN, gridH = cell * rowsN;
-    var ox = margin + (availW - gridW) / 2, oy = margin + (availH - gridH) / 2;
-    var occupied = {};
-    function key(c, r) { return c + "," + r; }
-    function freeCell(c0, r0) {
-      c0 = Math.max(0, Math.min(colsN - 1, c0));
-      r0 = Math.max(0, Math.min(rowsN - 1, r0));
-      if (!occupied[key(c0, r0)]) return [c0, r0];
-      for (var rad = 1; rad < Math.max(colsN, rowsN); rad++) {
-        for (var dc = -rad; dc <= rad; dc++) {
-          for (var dr = -rad; dr <= rad; dr++) {
-            if (Math.max(Math.abs(dc), Math.abs(dr)) !== rad) continue;
-            var c = c0 + dc, r = r0 + dr;
-            if (c < 0 || r < 0 || c >= colsN || r >= rowsN) continue;
-            if (!occupied[key(c, r)]) return [c, r];
-          }
-        }
-      }
-      return null;
-    }
-    var order = rows.map(function (r, i) { return i; })
-      .sort(function (a, b) { return rows[b].lat - rows[a].lat || rows[a].lon - rows[b].lon; });
-    var cells = new Array(rows.length);
-    order.forEach(function (i) {
-      var r = rows[i];
-      var c0 = Math.round((r.lon - lon0) / (lon1 - lon0) * (colsN - 1));
-      var r0 = Math.round((lat1 - r.lat) / (lat1 - lat0) * (rowsN - 1));
-      var cellIdx = freeCell(c0, r0);
-      occupied[key(cellIdx[0], cellIdx[1])] = true;
-      cells[i] = cellIdx;
-    });
-    return cells.map(function (cellIdx) {
+    var s = Math.min(availW / Math.max(spanX, 1e-9), availH / Math.max(spanY, 1e-9));
+    var ox = margin + (availW - spanX * s) / 2, oy = margin + (availH - spanY * s) / 2;
+    return rows.map(function (r) {
       return {
-        x: ox + (cellIdx[0] + 0.5) * cell,
-        y: oy + (cellIdx[1] + 0.5) * cell,
-        r: cell * 0.45
+        x: ox + (r.lon - lon0) * Math.cos(latC) * s,
+        y: h - (oy + (r.lat - lat0) * s),
+        r: POINT_R
       };
     });
   }
@@ -310,7 +277,7 @@
     mulberry32: mulberry32, standardize: standardize, expandFeatures: expandFeatures,
     onehotRegions: onehotRegions, runTSNE: runTSNE, kmeans: kmeans,
     purityStats: purityStats, parties: parties, cohensD: cohensD,
-    clusterProfiles: clusterProfiles, cartogramLayout: cartogramLayout, tsneLayout: tsneLayout
+    clusterProfiles: clusterProfiles, mapLayout: mapLayout, tsneLayout: tsneLayout
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.APP = api;
@@ -401,9 +368,8 @@
   function animateToTsne() {
     var canvas = $("plot-tsne");
     var cw = canvas.clientWidth, ch = canvas.clientHeight;
-    var from = (state.rightPositions || api.cartogramLayout(rows, cw, ch, MARGIN)).map(function (p) { return { x: p.x, y: p.y, r: p.r }; });
-    var radius = from[0].r;
-    var to = api.tsneLayout(state.Y, cw, ch, MARGIN, radius);
+    var from = (state.rightPositions || api.mapLayout(rows, cw, ch, MARGIN)).map(function (p) { return { x: p.x, y: p.y, r: p.r }; });
+    var to = api.tsneLayout(state.Y, cw, ch, MARGIN, POINT_R);
     var t0 = null;
     state.animating = true;
     function frame(now) {
@@ -464,7 +430,7 @@
   function geoPositions() {
     var canvas = $("plot-geo");
     var cw = canvas.clientWidth || 440, ch = canvas.clientHeight || 560;
-    return api.cartogramLayout(rows, cw, ch, MARGIN);
+    return api.mapLayout(rows, cw, ch, MARGIN);
   }
 
   function drawAll() {

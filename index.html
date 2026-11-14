@@ -63,7 +63,7 @@
 <body>
 <header>
   <h1>2026 Thai general election — which societal factors predict the winning party?</h1>
-  <p>The left window is a <b>geographic mosaic cartogram</b>: 77 equal circles, one per province, arranged on Thailand's geography and coloured by the party that won the most raw votes (masked from the embedding). The right window starts as the same cartogram; select factors on the left and press <b>Calculate t-SNE</b> — the circles animate from their geographic positions into the <b>t-SNE embedding computed from only the selected factors</b> (region one-hot encoded). Homogeneous single-party clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
+  <p>The left window is a <b>geographic map</b> of the 77 province centroids, coloured by the party that won the most raw votes (masked from the embedding). The right window starts as the same map; select factors on the left and press <b>Calculate t-SNE</b> — the points animate from their geographic positions into the <b>t-SNE embedding computed from only the selected factors</b> (region one-hot encoded). Homogeneous single-party clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
 </header>
 <div id="layout">
   <div id="sidebar">
@@ -86,12 +86,12 @@
   </div>
   <div id="main">
     <div class="plot-wrap">
-      <h3>Geographic mosaic cartogram (77 equal circles, by winning party)</h3>
+      <h3>Geographic map (province centroids, by winning party)</h3>
       <canvas id="plot-geo"></canvas>
       <div class="tooltip" id="tooltip-plot-geo"></div>
     </div>
     <div class="plot-wrap">
-      <h3>t-SNE embedding (starts as the cartogram, animates into clusters)</h3>
+      <h3>t-SNE embedding (starts as the map, animates into clusters)</h3>
       <canvas id="plot-tsne"></canvas>
       <div class="tooltip" id="tooltip-plot-tsne"></div>
     </div>
@@ -123,7 +123,7 @@
 <footer>
   Result: the party with the most raw votes (combined party-list count) per province in the 2026 Thai general election; it is never an input to the embedding.<br>
   Factors: province-level turnout (1 − turnout), invalid party-list / constituency ballot rates, household internet, median equivalised monthly household income, poverty headcount ratio &amp; poverty %, equivalised income Gini, household debt-to-monthly-income ratio, employment YoY change, agriculture &amp; manufacturing GPP shares, urban population %, population 60+ % and population change, skip-generation households %, higher education (25+) %, non-formal education students %, no-higher-education rate; region is one-hot encoded (กลาง / ตะวันออกเฉียงเหนือ / เหนือ / ใต้) before being fed to t-SNE. Province centroids for the map view come from polygon-derived centroid data.<br>
-  Embedding: t-SNE (tsne.js, bundled locally) on standardized selected factors; the winning party is never an input. Hover a circle for details; the cartogram's circle positions are grid-packed from province centroids.
+  Embedding: t-SNE (tsne.js, bundled locally) on standardized selected factors; the winning party is never an input. Hover a point for details; the map view uses province centroids (equirectangular projection).
 </footer>
 <script src="vendor/tsne.js"></script>
 <script src="data/provinces.js"></script>
