@@ -27,12 +27,12 @@
   FEATURES.forEach(function (f) { FEATURE_MAP[f.key] = f; });
 
   var PARTY_COLORS = {
-    "ประชาชน": "#e6851a",
-    "เพื่อไทย": "#b2182b",
-    "ภูมิใจไทย": "#2166ac",
-    "ประชาธิปัตย์": "#1b7837",
-    "ประชาชาติ": "#762a83",
-    "กล้าธรรม": "#d95f02"
+    "ประชาชาติ": "#BA810D",
+    "ประชาชน": "#FD6413",
+    "เพื่อไทย": "#E30F13",
+    "ประชาธิปัตย์": "#30A1E9",
+    "ภูมิใจไทย": "#312783",
+    "กล้าธรรม": "#4EC86F"
   };
   var FALLBACK_PALETTE = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3"];
   var CLUSTER_PALETTE = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#666666", "#8da0cb", "#fc8d62", "#66c2a5", "#ffd92f", "#b3b3b3", "#e41a1c", "#377eb8"];
@@ -287,7 +287,7 @@
   var rows = global.PROVINCES;
   var state = {
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
-    perplexity: 12, nIter: 1000, learningRate: 200, seed: 42, k: 6,
+    perplexity: 25, nIter: 1000, learningRate: 100, seed: 42, k: 6,
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false,
     rightPositions: null, animating: false
@@ -320,11 +320,7 @@
       $(id + "-val").textContent = s.value;
       s.addEventListener("input", function () { state[key] = +s.value; $(id + "-val").textContent = s.value; });
     }
-    slider("perplexity", "perplexity", 5, 30, 1);
-    slider("niter", "nIter", 250, 2000, 50);
-    slider("lr", "learningRate", 50, 500, 10);
-    slider("seed", "seed", 1, 9999, 1);
-    slider("k", "k", 2, 15, 1);
+    slider("k", "k", 2, 6, 1);
 
     Array.prototype.forEach.call(document.querySelectorAll('input[name="colorby"]'), function (r) {
       r.checked = r.value === state.colorBy;
@@ -525,26 +521,6 @@
       });
     }
 
-    var partyList = api.parties(rows, 3);
-    var dbox = $("cohensd");
-    dbox.innerHTML = "";
-    partyList.forEach(function (party) {
-      dbox.appendChild(el("div", "d-party", "<b>" + party + "</b> (provinces won vs rest)"));
-      api.cohensD(rows, api.FEATURES.map(function (f) { return f.key; }), [party])[0].factors.slice(0, 5).forEach(function (r) {
-        var row = el("div", "d-row");
-        var w = Math.min(Math.abs(r.d), 2) / 2 * 100;
-        row.appendChild(el("div", "d-lab", r.label));
-        var track = el("div", "d-track");
-        var fill = el("div", "d-fill");
-        fill.style.width = w + "%";
-        fill.style.background = r.d > 0 ? api.partyColor(party) : "#999999";
-        if (r.d < 0) fill.style.marginLeft = (100 - w) + "%";
-        track.appendChild(fill);
-        row.appendChild(track);
-        row.appendChild(el("div", "d-val", (r.d > 0 ? "+" : "") + r.d.toFixed(2)));
-        dbox.appendChild(row);
-      });
-    });
   }
 
   function renderTable() {
