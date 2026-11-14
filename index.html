@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2026 US Midterm House — District Factor Explorer (t-SNE)</title>
+<title>2026 Thai General Election — Province Factor Explorer (t-SNE)</title>
 <style>
-  :root { --blue:#2166ac; --red:#b2182b; --grey:#999; --line:#ddd; }
+  :root { --blue:#2166ac; --grey:#999; --line:#ddd; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:#222; background:#fafafa; }
   header { background:#1a2733; color:#fff; padding:14px 20px; }
@@ -47,6 +47,7 @@
   th:first-child, td:first-child { text-align:left; }
   th { position:sticky; top:0; background:#f5f5f5; }
   .scroll { max-height:260px; overflow:auto; }
+  .d-party { font-size:11px; color:#333; margin:8px 0 3px; }
   .d-row { display:flex; align-items:center; gap:6px; margin:3px 0; font-size:10.5px; }
   .d-lab { width:190px; flex:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .d-track { flex:1; background:#eee; height:10px; border-radius:4px; position:relative; }
@@ -60,8 +61,8 @@
 </head>
 <body>
 <header>
-  <h1>2026 US Midterm House elections — which societal factors predict the winner?</h1>
-  <p>Select factors on the left, then run <b>t-SNE</b>. All 435 congressional districts are embedded using <b>only the selected factors — the 3 Nov 2026 vote result is masked from the embedding</b> — and then coloured by the actual result (blue = Democrat, red = Republican, grey = not called). Homogeneous red/blue clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
+  <h1>2026 Thai general election — which societal factors predict the winning party?</h1>
+  <p>Select factors on the left, then run <b>t-SNE</b>. All 77 provinces are embedded using <b>only the selected factors — the party that won the most raw votes in each province is masked from the embedding</b> (the region is fed in one-hot encoded) — and then coloured by the actual winning party. Homogeneous single-party clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
 </header>
 <div id="layout">
   <div id="sidebar">
@@ -76,13 +77,13 @@
     <div class="slider-row"><label>k <span id="k-val"></span></label><input type="range" id="k"></div>
     <h2>View &amp; colour</h2>
     <div class="radio-row"><label><input type="radio" name="view" value="embed" checked> t-SNE embedding</label></div>
-    <div class="radio-row"><label><input type="radio" name="view" value="map"> Geographic (district centroids)</label></div>
-    <div class="radio-row"><label><input type="radio" name="colorby" value="result" checked> colour by 2026 result</label></div>
+    <div class="radio-row"><label><input type="radio" name="view" value="map"> Geographic (province centroids)</label></div>
+    <div class="radio-row"><label><input type="radio" name="colorby" value="result" checked> colour by winning party</label></div>
     <div class="radio-row"><label><input type="radio" name="colorby" value="cluster"> colour by cluster</label></div>
     <button id="run">▶ Run t-SNE</button>
     <div id="progress-wrap"><div id="progress-bar"></div></div>
     <div id="status"></div>
-    <button id="dl">⬇ Download districts CSV</button>
+    <button id="dl">⬇ Download provinces CSV</button>
   </div>
   <div id="main">
     <div id="plot-wrap">
@@ -105,22 +106,22 @@
       <div class="scroll"><table id="profiles"></table></div>
     </div>
     <div class="card">
-      <h3>Single-factor signal (Cohen's d, D- vs R-won)</h3>
+      <h3>Single-factor signal (Cohen's d, party-won vs rest)</h3>
       <div id="cohensd"></div>
     </div>
   </div>
 </div>
 <div id="datatable-wrap">
-  <h3>All districts (435)</h3>
+  <h3>All provinces (77)</h3>
   <div class="scroll" style="max-height:340px"><table id="datatable"></table></div>
 </div>
 <footer>
-  Results: all 435 House races of 3 Nov 2026 as called by AP / Decision Desk HQ / state officials / network decision desks, aggregated by usmidterm2026.com (252 Democratic, 160 Republican, 23 not yet called as of 5 Nov 2026, 10:43 p.m. ET).<br>
-  Demographics: ACS 2024 5-year estimates (2020–2024) per congressional district via Census Reporter; land area and centroids from the Census Bureau 2026 Gazetteer (120th Congress districts). 9 states used new 2026 district lines (AL, CA, FL, LA, NC, OH, TN, TX, UT; MO kept 2022 lines), so ACS district vintages can differ slightly from the 2026 ballot lines there.<br>
-  Embedding: t-SNE (tsne.js, bundled locally) on standardized selected factors; the vote result is never an input. Drag to pan, mouse wheel to zoom, hover a point for details.
+  Result: the party with the most raw votes (combined party-list count) per province in the 2026 Thai general election; it is never an input to the embedding.<br>
+  Factors: province-level turnout (1 − turnout), invalid party-list / constituency ballot rates, household internet, median equivalised monthly household income, poverty headcount ratio &amp; poverty %, equivalised income Gini, household debt-to-monthly-income ratio, employment YoY change, agriculture &amp; manufacturing GPP shares, urban population %, population 60+ % and population change, skip-generation households %, higher education (25+) %, non-formal education students %, no-higher-education rate; region is one-hot encoded (กลาง / ตะวันออกเฉียงเหนือ / เหนือ / ใต้) before being fed to t-SNE. Province centroids for the map view come from polygon-derived centroid data.<br>
+  Embedding: t-SNE (tsne.js, bundled locally) on standardized selected factors; the winning party is never an input. Drag to pan, mouse wheel to zoom, hover a point for details.
 </footer>
 <script src="vendor/tsne.js"></script>
-<script src="data/districts.js"></script>
+<script src="data/provinces.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
