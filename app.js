@@ -236,12 +236,81 @@
     }).sort(function (a, b) { return b.size - a.size; });
   }
 
+  function cartogramLayout(rows, w, h, margin) {
+    var lons = rows.map(function (r) { return r.lon; });
+    var lats = rows.map(function (r) { return r.lat; });
+    var lon0 = Math.min.apply(null, lons), lon1 = Math.max.apply(null, lons);
+    var lat0 = Math.min.apply(null, lats), lat1 = Math.max.apply(null, lats);
+    var latC = (lat0 + lat1) / 2 * Math.PI / 180;
+    var spanX = (lon1 - lon0) * Math.cos(latC), spanY = lat1 - lat0;
+    var aspect = spanX / spanY;
+    var rowsN = Math.ceil(Math.sqrt(rows.length / aspect));
+    var colsN = Math.max(1, Math.ceil(rowsN * aspect));
+    while (rowsN * colsN < rows.length) colsN++;
+    var availW = w - 2 * margin, availH = h - 2 * margin;
+    var cellW = availW / colsN, cellH = availH / rowsN;
+    var cell = Math.min(cellW, cellH);
+    var gridW = cell * colsN, gridH = cell * rowsN;
+    var ox = margin + (availW - gridW) / 2, oy = margin + (availH - gridH) / 2;
+    var occupied = {};
+    function key(c, r) { return c + "," + r; }
+    function freeCell(c0, r0) {
+      c0 = Math.max(0, Math.min(colsN - 1, c0));
+      r0 = Math.max(0, Math.min(rowsN - 1, r0));
+      if (!occupied[key(c0, r0)]) return [c0, r0];
+      for (var rad = 1; rad < Math.max(colsN, rowsN); rad++) {
+        for (var dc = -rad; dc <= rad; dc++) {
+          for (var dr = -rad; dr <= rad; dr++) {
+            if (Math.max(Math.abs(dc), Math.abs(dr)) !== rad) continue;
+            var c = c0 + dc, r = r0 + dr;
+            if (c < 0 || r < 0 || c >= colsN || r >= rowsN) continue;
+            if (!occupied[key(c, r)]) return [c, r];
+          }
+        }
+      }
+      return null;
+    }
+    var order = rows.map(function (r, i) { return i; })
+      .sort(function (a, b) { return rows[b].lat - rows[a].lat || rows[a].lon - rows[b].lon; });
+    var cells = new Array(rows.length);
+    order.forEach(function (i) {
+      var r = rows[i];
+      var c0 = Math.round((r.lon - lon0) / (lon1 - lon0) * (colsN - 1));
+      var r0 = Math.round((lat1 - r.lat) / (lat1 - lat0) * (rowsN - 1));
+      var cellIdx = freeCell(c0, r0);
+      occupied[key(cellIdx[0], cellIdx[1])] = true;
+      cells[i] = cellIdx;
+    });
+    return cells.map(function (cellIdx) {
+      return {
+        x: ox + (cellIdx[0] + 0.5) * cell,
+        y: oy + (cellIdx[1] + 0.5) * cell,
+        r: cell * 0.45
+      };
+    });
+  }
+
+  function tsneLayout(Y, w, h, margin, radius) {
+    var xs = Y.map(function (q) { return q[0]; });
+    var ys = Y.map(function (q) { return q[1]; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    var availW = w - 2 * margin, availH = h - 2 * margin;
+    var sx = availW / Math.max(x1 - x0, 1e-9), sy = availH / Math.max(y1 - y0, 1e-9);
+    var s = Math.min(sx, sy);
+    var ox = margin + (availW - (x1 - x0) * s) / 2, oy = margin + (availH - (y1 - y0) * s) / 2;
+    return Y.map(function (p) {
+      return { x: ox + (p[0] - x0) * s, y: h - (oy + (p[1] - y0) * s), r: radius };
+    });
+  }
+
   var api = {
     FEATURES: FEATURES, FEATURE_MAP: FEATURE_MAP, PARTY_COLORS: PARTY_COLORS,
     CLUSTER_PALETTE: CLUSTER_PALETTE, partyColor: partyColor,
     mulberry32: mulberry32, standardize: standardize, expandFeatures: expandFeatures,
     onehotRegions: onehotRegions, runTSNE: runTSNE, kmeans: kmeans,
-    purityStats: purityStats, parties: parties, cohensD: cohensD, clusterProfiles: clusterProfiles
+    purityStats: purityStats, parties: parties, cohensD: cohensD,
+    clusterProfiles: clusterProfiles, cartogramLayout: cartogramLayout, tsneLayout: tsneLayout
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.APP = api;
@@ -252,9 +321,12 @@
   var state = {
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
     perplexity: 12, nIter: 1000, learningRate: 200, seed: 42, k: 6,
-    colorBy: "result", view: "embed",
-    Y: null, labels: null, purity: null, running: false
+    colorBy: "result",
+    Y: null, labels: null, purity: null, running: false,
+    rightPositions: null, animating: false
   };
+  var MARGIN = 30;
+  var ANIM_MS = 1200;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
@@ -289,11 +361,7 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('input[name="colorby"]'), function (r) {
       r.checked = r.value === state.colorBy;
-      r.addEventListener("change", function () { state.colorBy = r.value; draw(); });
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('input[name="view"]'), function (r) {
-      r.checked = r.value === state.view;
-      r.addEventListener("change", function () { state.view = r.value; draw(); });
+      r.addEventListener("change", function () { state.colorBy = r.value; drawAll(); });
     });
     $("run").addEventListener("click", runAll);
     $("dl").addEventListener("click", downloadCSV);
@@ -323,109 +391,111 @@
         $("progress-wrap").style.display = "none";
         $("status").textContent = "t-SNE done: " + res.iter + " iterations on " + nDims + " column(s). k-means k=" + state.k +
           " → overall cluster purity " + (state.purity.overall * 100).toFixed(0) + "% (share of provinces in their cluster's majority party).";
-        draw();
+        animateToTsne();
         renderStats();
       });
   }
 
-  function projectEmbed(p, view) {
-    var w = view.w, h = view.h, m = view.margin;
-    var xs = state.Y.map(function (q) { return q[0]; });
-    var ys = state.Y.map(function (q) { return q[1]; });
-    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
-    var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-    var sx = (w - 2 * m) / Math.max(x1 - x0, 1e-9), sy = (h - 2 * m) / Math.max(y1 - y0, 1e-9);
-    var s = Math.min(sx, sy);
-    var ox = m + (w - 2 * m - (x1 - x0) * s) / 2, oy = m + (h - 2 * m - (y1 - y0) * s) / 2;
-    return [ox + (p[0] - x0) * s, h - (oy + (p[1] - y0) * s)];
+  function easeInOut(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  function animateToTsne() {
+    var canvas = $("plot-tsne");
+    var cw = canvas.clientWidth, ch = canvas.clientHeight;
+    var from = (state.rightPositions || api.cartogramLayout(rows, cw, ch, MARGIN)).map(function (p) { return { x: p.x, y: p.y, r: p.r }; });
+    var radius = from[0].r;
+    var to = api.tsneLayout(state.Y, cw, ch, MARGIN, radius);
+    var t0 = null;
+    state.animating = true;
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      var t = Math.min(1, (now - t0) / ANIM_MS);
+      var e = easeInOut(t);
+      state.rightPositions = from.map(function (p, i) {
+        return {
+          x: p.x + (to[i].x - p.x) * e,
+          y: p.y + (to[i].y - p.y) * e,
+          r: p.r
+        };
+      });
+      drawAll();
+      if (t < 1) requestAnimationFrame(frame);
+      else state.animating = false;
+    }
+    requestAnimationFrame(frame);
   }
 
-  function projectMap(p, view) {
-    var w = view.w, h = view.h, m = view.margin;
-    var lons = rows.map(function (r) { return r.lon; });
-    var lats = rows.map(function (r) { return r.lat; });
-    var lon0 = Math.min.apply(null, lons), lon1 = Math.max.apply(null, lons);
-    var lat0 = Math.min.apply(null, lats), lat1 = Math.max.apply(null, lats);
-    var latC = (lat0 + lat1) / 2 * Math.PI / 180;
-    var spanX = (lon1 - lon0) * Math.cos(latC), spanY = lat1 - lat0;
-    var s = Math.min((w - 2 * m) / Math.max(spanX, 1e-9), (h - 2 * m) / Math.max(spanY, 1e-9));
-    var ox = m + (w - 2 * m - spanX * s) / 2, oy = m + (h - 2 * m - spanY * s) / 2;
-    return [ox + (p[0] - lon0) * Math.cos(latC) * s, h - (oy + (p[1] - lat0) * s)];
-  }
-
-  var view = { w: 900, h: 620, margin: 40, scale: 1, tx: 0, ty: 0, dragging: false, lastX: 0, lastY: 0, pts: [] };
-
-  function draw() {
-    var canvas = $("plot");
+  function drawWindow(canvasId, positions, colorFn) {
+    var canvas = $(canvasId);
     var dpr = global.devicePixelRatio || 1;
-    var cw = canvas.clientWidth || 900, ch = canvas.clientHeight || 620;
+    var cw = canvas.clientWidth || 440, ch = canvas.clientHeight || 560;
     canvas.width = cw * dpr; canvas.height = ch * dpr;
-    view.w = cw; view.h = ch;
     var ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cw, ch);
-
-    var proj = state.view === "map" ? projectMap : projectEmbed;
-    var dataPts = state.view === "map"
-      ? rows.map(function (r) { return [r.lon, r.lat]; })
-      : (state.Y || []);
-    if (!dataPts.length) {
-      ctx.fillStyle = "#666"; ctx.font = "15px sans-serif";
-      ctx.fillText("Press “Run t-SNE” to compute the embedding.", 20, 30);
-      return;
-    }
-    view.pts = dataPts.map(function (p, i) { var q = proj(p, view); return { x: q[0] * view.scale + view.tx, y: q[1] * view.scale + view.ty, i: i }; });
-
-    ctx.strokeStyle = "#ccc"; ctx.strokeRect(view.margin, view.margin, cw - 2 * view.margin, ch - 2 * view.margin);
-    ctx.fillStyle = "#555"; ctx.font = "12px sans-serif";
-    ctx.fillText(state.view === "map" ? "longitude (equirectangular, province centroids)" : "t-SNE dimension 1", view.margin, ch - 12);
-    ctx.save(); ctx.translate(12, ch - view.margin); ctx.rotate(-Math.PI / 2);
-    ctx.fillText(state.view === "map" ? "latitude" : "t-SNE dimension 2", 0, 0); ctx.restore();
-
-    view.pts.forEach(function (pt) {
-      var r = rows[pt.i];
-      var color;
-      if (state.view === "map" || state.colorBy === "result") color = api.partyColor(r.party_name_th);
-      else color = api.CLUSTER_PALETTE[(state.labels ? state.labels[pt.i] : 0) % api.CLUSTER_PALETTE.length];
+    ctx.strokeStyle = "#ccc"; ctx.strokeRect(MARGIN, MARGIN, cw - 2 * MARGIN, ch - 2 * MARGIN);
+    positions.forEach(function (p, i) {
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, state.view === "map" ? 4 : 4.5, 0, 2 * Math.PI);
-      ctx.globalAlpha = r.party_name_th ? 0.9 : 0.35;
-      ctx.fillStyle = color;
+      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      ctx.globalAlpha = rows[i].party_name_th ? 0.9 : 0.35;
+      ctx.fillStyle = colorFn(i);
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.lineWidth = 0.6; ctx.strokeStyle = "#fff"; ctx.stroke();
+      ctx.lineWidth = 0.8; ctx.strokeStyle = "#fff"; ctx.stroke();
     });
+    return { w: cw, h: ch };
+  }
 
-    var legend = state.view === "map" || state.colorBy === "result"
-      ? api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; })
-      : state.labels ? Array.from(new Set(state.labels)).sort().map(function (c) { return ["cluster C" + c, api.CLUSTER_PALETTE[c % api.CLUSTER_PALETTE.length]]; }) : [];
-    var lx = cw - 170, ly = view.margin + 8;
+  function drawLegend(canvasId, legend) {
+    var canvas = $(canvasId);
+    var ctx = canvas.getContext("2d");
+    var cw = canvas.clientWidth, ch = canvas.clientHeight;
+    var lx = cw - 150, ly = MARGIN + 6;
+    ctx.font = "11px sans-serif";
+    var maxW = 0;
+    legend.forEach(function (L) { maxW = Math.max(maxW, ctx.measureText(L[0]).width); });
+    lx = cw - maxW - 34;
     legend.forEach(function (L, i) {
       ctx.fillStyle = L[1]; ctx.beginPath(); ctx.arc(lx + 6, ly + i * 18 + 5, 5, 0, 2 * Math.PI); ctx.fill();
-      ctx.fillStyle = "#333"; ctx.font = "11px sans-serif"; ctx.fillText(L[0], lx + 16, ly + i * 18 + 9);
+      ctx.fillStyle = "#333"; ctx.fillText(L[0], lx + 16, ly + i * 18 + 9);
     });
   }
 
-  function bindPlot() {
-    var canvas = $("plot");
-    canvas.addEventListener("mousedown", function (e) { view.dragging = true; view.lastX = e.clientX; view.lastY = e.clientY; });
-    global.addEventListener("mouseup", function () { view.dragging = false; });
-    global.addEventListener("mousemove", function (e) {
-      if (view.dragging) {
-        view.tx += e.clientX - view.lastX; view.ty += e.clientY - view.lastY;
-        view.lastX = e.clientX; view.lastY = e.clientY;
-        draw();
-        return;
-      }
+  function geoPositions() {
+    var canvas = $("plot-geo");
+    var cw = canvas.clientWidth || 440, ch = canvas.clientHeight || 560;
+    return api.cartogramLayout(rows, cw, ch, MARGIN);
+  }
+
+  function drawAll() {
+    var geo = geoPositions();
+    drawWindow("plot-geo", geo, function (i) { return api.partyColor(rows[i].party_name_th); });
+    drawLegend("plot-geo", api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; }));
+
+    var right = state.rightPositions || geo;
+    var rightColor = state.colorBy === "cluster" && state.labels
+      ? function (i) { return api.CLUSTER_PALETTE[state.labels[i] % api.CLUSTER_PALETTE.length]; }
+      : function (i) { return api.partyColor(rows[i].party_name_th); };
+    drawWindow("plot-tsne", right, rightColor);
+    var legend = state.colorBy === "cluster" && state.labels
+      ? Array.from(new Set(state.labels)).sort().map(function (c) { return ["cluster C" + c, api.CLUSTER_PALETTE[c % api.CLUSTER_PALETTE.length]]; })
+      : api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; });
+    drawLegend("plot-tsne", legend);
+  }
+
+  function bindTooltip(canvasId, positionsFn) {
+    var canvas = $(canvasId);
+    canvas.addEventListener("mousemove", function (e) {
       var rect = canvas.getBoundingClientRect();
       var mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      var best = null, bd = 12 * 12;
-      (view.pts || []).forEach(function (pt) {
-        var dd = (pt.x - mx) * (pt.x - mx) + (pt.y - my) * (pt.y - my);
-        if (dd < bd) { bd = dd; best = pt; }
+      var pts = positionsFn();
+      var best = null, bd = Infinity;
+      pts.forEach(function (p, i) {
+        var dd = (p.x - mx) * (p.x - mx) + (p.y - my) * (p.y - my);
+        var rr = p.r * p.r;
+        if (dd <= rr && dd < bd) { bd = dd; best = { p: p, i: i }; }
       });
-      var tip = $("tooltip");
+      var tip = $("tooltip-" + canvasId);
       if (best) {
         var r = rows[best.i];
         var html = "<b>" + r.province_name_th + "</b> — " + (r.party_name_th || "n/a") +
@@ -442,17 +512,7 @@
         tip.style.top = Math.min(my + 14, rect.height - 120) + "px";
       } else tip.style.display = "none";
     });
-    canvas.addEventListener("wheel", function (e) {
-      e.preventDefault();
-      var rect = canvas.getBoundingClientRect();
-      var mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      var f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      view.scale *= f;
-      view.tx = mx - (mx - view.tx) * f;
-      view.ty = my - (my - view.ty) * f;
-      draw();
-    }, { passive: false });
-    global.addEventListener("resize", draw);
+    canvas.addEventListener("mouseleave", function () { $("tooltip-" + canvasId).style.display = "none"; });
   }
 
   function renderStats() {
@@ -558,9 +618,11 @@
 
   function initUI() {
     buildControls();
-    bindPlot();
+    bindTooltip("plot-geo", geoPositions);
+    bindTooltip("plot-tsne", function () { return state.rightPositions || geoPositions(); });
     renderTable();
-    runAll();
+    drawAll();
+    global.addEventListener("resize", function () { if (!state.animating) drawAll(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initUI);
