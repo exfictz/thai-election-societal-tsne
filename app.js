@@ -287,7 +287,7 @@
   var rows = global.PROVINCES;
   var state = {
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
-    perplexity: 35, nIter: 1000, learningRate: 100, seed: 42, k: 6,
+    perplexity: 25, nIter: 1000, learningRate: 100, seed: 42, k: 6,
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false,
     rightPositions: null, animating: false
