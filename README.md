@@ -26,14 +26,19 @@ Framework Preset to "Other".)
 
 ## How it works
 
-1. Select one or more factors (median income, urbanisation, education, poverty,
+1. The main area has two windows side by side (no zooming or panning):
+   - **Left — geographic mosaic cartogram**: 77 equal circles, one per province,
+     packed onto a grid that follows Thailand's geography (circle positions derived
+     from province centroids), coloured by the winning party.
+   - **Right — t-SNE**: before any run it shows the same cartogram layout.
+2. Select one or more factors (median income, urbanisation, education, poverty,
    Gini, household debt, agriculture/manufacturing GPP shares, invalid ballots,
    turnout, etc.) in the sidebar. The **region** (กลาง / ตะวันออกเฉียงเหนือ /
    เหนือ / ใต้) is **one-hot encoded** before being fed to t-SNE.
-2. Press **Run t-SNE**: all 77 provinces are embedded with **t-SNE using only the
-   selected, standardized factors — the winning party is masked from the embedding**.
-3. The 2026 winning party per province (one colour per party) is coloured **on top**
-   of the embedding.
+3. Press **Calculate t-SNE**: all 77 provinces are embedded with **t-SNE using only
+   the selected, standardized factors — the winning party is masked from the
+   embedding** — and the circles **animate** from their geographic positions into
+   the embedding.
 4. **k-means** clusters the embedding; per-cluster **purity** (share of provinces
    matching their cluster's majority party) and an overall homogeneity score are
    shown. Homogeneous single-party clusters = the selected factors are good
@@ -42,9 +47,8 @@ Framework Preset to "Other".)
 Same idea as overlaying cell types on a scRNA-seq t-SNE/UMAP plot.
 
 Features: perplexity / iterations / learning-rate / seed sliders, factor multiselect,
-colour-by-party-or-cluster, hover tooltips, drag-pan + wheel-zoom, geographic
-centroid map view, cluster profile table, per-party Cohen's d chart, full data table
-and CSV download.
+colour-by-party-or-cluster, hover tooltips, animated cartogram → t-SNE transition,
+cluster profile table, per-party Cohen's d chart, full data table and CSV download.
 
 ## Files
 
