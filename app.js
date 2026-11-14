@@ -521,26 +521,6 @@
       });
     }
 
-    var partyList = api.parties(rows, 3);
-    var dbox = $("cohensd");
-    dbox.innerHTML = "";
-    partyList.forEach(function (party) {
-      dbox.appendChild(el("div", "d-party", "<b>" + party + "</b> (provinces won vs rest)"));
-      api.cohensD(rows, api.FEATURES.map(function (f) { return f.key; }), [party])[0].factors.slice(0, 5).forEach(function (r) {
-        var row = el("div", "d-row");
-        var w = Math.min(Math.abs(r.d), 2) / 2 * 100;
-        row.appendChild(el("div", "d-lab", r.label));
-        var track = el("div", "d-track");
-        var fill = el("div", "d-fill");
-        fill.style.width = w + "%";
-        fill.style.background = r.d > 0 ? api.partyColor(party) : "#999999";
-        if (r.d < 0) fill.style.marginLeft = (100 - w) + "%";
-        track.appendChild(fill);
-        row.appendChild(track);
-        row.appendChild(el("div", "d-val", (r.d > 0 ? "+" : "") + r.d.toFixed(2)));
-        dbox.appendChild(row);
-      });
-    });
   }
 
   function renderTable() {

@@ -45,9 +45,10 @@ Framework Preset to "Other".)
 
 Same idea as overlaying cell types on a scRNA-seq t-SNE/UMAP plot.
 
-Features: perplexity / iterations / learning-rate / seed sliders, factor multiselect,
-colour-by-party-or-cluster, hover tooltips, animated map → t-SNE transition,
-cluster profile table, per-party Cohen's d chart, full data table and CSV download.
+Features: factor multiselect, k-means k slider (2–6), colour-by-party-or-cluster,
+hover tooltips, animated map → t-SNE transition, cluster purity bars, cluster
+profile table, full data table and CSV download. t-SNE parameters are fixed
+(perplexity 25, 1000 iterations, learning rate 100, seed 42).
 
 ## Files
 
