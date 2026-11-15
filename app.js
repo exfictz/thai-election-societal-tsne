@@ -433,7 +433,7 @@
   }
 
   function geoAlpha(i) {
-    if (state.brush.active && !state.brush.selected[i]) return baseAlpha(i) * 0.5;
+    if (state.brush.active && !state.brush.selected[i]) return baseAlpha(i) * 0.2;
     return baseAlpha(i);
   }
 
