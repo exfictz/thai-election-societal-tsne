@@ -2,7 +2,7 @@
   "use strict";
 
   var FEATURES = [
-    { key: "region_name_th", label: "Region (one-hot encoded)", onehot: true, fmt: function (v) { return v || "n/a"; } },
+    { key: "region_name_th", label: "Region", categorical: true, fmt: function (v) { return v || "n/a"; } },
     { key: "voters_not_came_rate_pct", label: "Voters who did not turn out (%)", fmt: function (v) { return v.toFixed(1) + "%"; } },
     { key: "invalid_party_list_rate_pct", label: "Invalid party-list ballots (%)", fmt: function (v) { return v.toFixed(2) + "%"; } },
     { key: "invalid_constituency_rate_pct", label: "Invalid constituency ballots (%)", fmt: function (v) { return v.toFixed(2) + "%"; } },
@@ -60,52 +60,55 @@
     try { return fn(); } finally { Math.random = orig; }
   }
 
-  function onehotRegions(rows) {
-    var seen = [];
-    rows.forEach(function (r) {
-      if (r.region_name_th && seen.indexOf(r.region_name_th) < 0) seen.push(r.region_name_th);
-    });
-    return seen.sort();
-  }
-
-  function expandFeatures(rows, feats) {
-    var cols = [];
-    feats.forEach(function (f) {
+  function gowerDistance(rows, feats) {
+    var n = rows.length, d = feats.length;
+    var cols = feats.map(function (f) {
       var def = FEATURE_MAP[f];
-      if (def && def.onehot) {
-        onehotRegions(rows).forEach(function (rg) {
-          cols.push({ name: f + "=" + rg, get: function (r) { return r[f] === rg ? 1 : 0; } });
-        });
-      } else {
-        cols.push({ name: f, get: function (r) { return r[f]; } });
+      var cat = !!(def && def.categorical);
+      var minV = Infinity, maxV = -Infinity;
+      if (!cat) {
+        for (var i = 0; i < n; i++) {
+          var v = rows[i][f];
+          if (v !== null && v !== undefined && !isNaN(v)) {
+            if (v < minV) minV = v;
+            if (v > maxV) maxV = v;
+          }
+        }
       }
+      return { key: f, categorical: cat, range: maxV > minV ? (maxV - minV) : 0 };
     });
-    return cols;
-  }
-
-  function standardize(rows, feats) {
-    var cols = expandFeatures(rows, feats);
-    var n = rows.length, d = cols.length;
-    var mean = [], sd = [];
-    for (var j = 0; j < d; j++) {
-      var s = 0, s2 = 0, cnt = 0;
-      for (var i = 0; i < n; i++) { var v = cols[j].get(rows[i]); if (v !== null && v !== undefined && !isNaN(v)) { s += v; s2 += v * v; cnt++; } }
-      mean[j] = cnt ? s / cnt : 0;
-      var varr = cnt > 1 ? (s2 / cnt - mean[j] * mean[j]) : 0;
-      sd[j] = Math.sqrt(Math.max(varr, 1e-12));
+    var D = new Array(n);
+    for (var i = 0; i < n; i++) {
+      D[i] = new Array(n);
+      D[i][i] = 0;
     }
-    var X = new Array(n);
     for (var i2 = 0; i2 < n; i2++) {
-      X[i2] = new Array(d);
-      for (var j2 = 0; j2 < d; j2++) {
-        var v2 = cols[j2].get(rows[i2]);
-        X[i2][j2] = (v2 === null || v2 === undefined || isNaN(v2)) ? 0 : (v2 - mean[j2]) / sd[j2];
+      for (var j2 = i2 + 1; j2 < n; j2++) {
+        var sum = 0, cnt = 0;
+        for (var k = 0; k < d; k++) {
+          var c = cols[k];
+          var vi = rows[i2][c.key], vj = rows[j2][c.key];
+          if (c.categorical) {
+            if (vi !== null && vi !== undefined && vi !== "" && vj !== null && vj !== undefined && vj !== "") {
+              sum += (vi === vj) ? 0 : 1;
+              cnt++;
+            }
+          } else {
+            if (vi !== null && vi !== undefined && !isNaN(vi) && vj !== null && vj !== undefined && !isNaN(vj)) {
+              sum += c.range > 0 ? Math.abs(vi - vj) / c.range : 0;
+              cnt++;
+            }
+          }
+        }
+        var dist = cnt ? sum / cnt : 0;
+        D[i2][j2] = dist;
+        D[j2][i2] = dist;
       }
     }
-    return X;
+    return D;
   }
 
-  function runTSNE(X, opts, onProgress) {
+  function runTSNE(D, opts, onProgress) {
     var tsnejs = global.tsnejs;
     var model = new tsnejs.tSNE({
       epsilon: opts.learningRate,
@@ -113,7 +116,7 @@
       dim: 2
     });
     return withSeed(opts.seed, function () {
-      model.initDataRaw(X);
+      model.initDataDist(D);
       var total = opts.nIter;
       var done = 0;
       function chunk() {
@@ -202,7 +205,7 @@
     return partyList.map(function (party) {
       var ds = feats.map(function (f) {
         var def = FEATURE_MAP[f];
-        if (def && def.onehot) return { key: f, label: def.label, d: 0 };
+        if (def && def.categorical) return { key: f, label: def.label, d: 0 };
         var a = rows.filter(function (r) { return r.party_name_th === party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
         var b = rows.filter(function (r) { return r.party_name_th !== party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
         if (a.length < 2 || b.length < 2) return { key: f, label: def.label, d: 0 };
@@ -225,7 +228,7 @@
       var means = {};
       feats.forEach(function (f) {
         var def = FEATURE_MAP[f];
-        if (def && def.onehot) {
+        if (def && def.categorical) {
           means[f] = null;
           return;
         }
@@ -274,8 +277,7 @@
   var api = {
     FEATURES: FEATURES, FEATURE_MAP: FEATURE_MAP, PARTY_COLORS: PARTY_COLORS,
     CLUSTER_PALETTE: CLUSTER_PALETTE, partyColor: partyColor,
-    mulberry32: mulberry32, standardize: standardize, expandFeatures: expandFeatures,
-    onehotRegions: onehotRegions, runTSNE: runTSNE, kmeans: kmeans,
+    mulberry32: mulberry32, gowerDistance: gowerDistance, runTSNE: runTSNE, kmeans: kmeans,
     purityStats: purityStats, parties: parties, cohensD: cohensD,
     clusterProfiles: clusterProfiles, mapLayout: mapLayout, tsneLayout: tsneLayout
   };
@@ -348,10 +350,10 @@
     state.pendingRun = false;
     $("progress-wrap").style.display = "block";
     $("progress-bar").style.width = "0%";
-    var nDims = api.expandFeatures(rows, state.selected).length;
-    $("status").textContent = "Standardizing " + nDims + " column(s) (region one-hot encoded) and running t-SNE (winning party masked)…";
-    var X = api.standardize(rows, state.selected);
-    api.runTSNE(X, { perplexity: state.perplexity, nIter: state.nIter, learningRate: state.learningRate, seed: state.seed },
+    var nDims = state.selected.length;
+    $("status").textContent = "Computing Gower distance on " + nDims + " factor(s) and running t-SNE (winning party masked)…";
+    var D = api.gowerDistance(rows, state.selected);
+    api.runTSNE(D, { perplexity: state.perplexity, nIter: state.nIter, learningRate: state.learningRate, seed: state.seed },
       function (p) {
         $("progress-bar").style.width = (p * 100).toFixed(0) + "%";
         $("status").textContent = "t-SNE iteration " + Math.round(p * state.nIter) + " / " + state.nIter + "…";
@@ -363,7 +365,7 @@
         state.hoverCluster = null;
         state.running = false;
         $("progress-wrap").style.display = "none";
-        $("status").textContent = "t-SNE done: " + res.iter + " iterations on " + nDims + " column(s). k-means k=" + state.k +
+        $("status").textContent = "t-SNE done: " + res.iter + " iterations on " + nDims + " factor(s) (Gower distance). k-means k=" + state.k +
           " → overall cluster purity " + (state.purity.overall * 100).toFixed(0) + "% (share of provinces in their cluster's majority party).";
         animateToTsne();
         renderStats();
@@ -611,7 +613,7 @@
         state.selected.forEach(function (f) {
           var def = api.FEATURE_MAP[f];
           var v = g.means[f];
-          if (def.onehot) {
+          if (def.categorical) {
             tr.appendChild(el("td", null, "—"));
           } else {
             tr.appendChild(el("td", null, v === null ? "n/a" : def.fmt(v)));

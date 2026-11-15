@@ -30,12 +30,11 @@ Framework Preset to "Other".)
    - **Left — geographic map**: the 77 province centroids (equirectangular
      projection), coloured by the winning party.
    - **Right — t-SNE**: before any run it shows the same centroid map.
-2. Select one or more factors (median income, urbanisation, education, poverty,
+2. Select one or more factors (region, median income, urbanisation, education, poverty,
    Gini, household debt, agriculture/manufacturing GPP shares, invalid ballots,
-   turnout, etc.) in the sidebar. The **region** (กลาง / ตะวันออกเฉียงเหนือ /
-   เหนือ / ใต้) is **one-hot encoded** before being fed to t-SNE.
-3. Press **Calculate t-SNE**: all 77 provinces are embedded with **t-SNE using only
-   the selected, standardized factors — the winning party is masked from the
+   turnout, etc.) in the sidebar.
+3. All 77 provinces are embedded with **t-SNE using Gower distance over only
+   the selected heterogeneous factors — the winning party is masked from the
    embedding** — and the points **animate** from their geographic positions into
    the embedding.
 4. **k-means** clusters the embedding; per-cluster **purity** (share of provinces
@@ -54,7 +53,7 @@ profile table, full data table and CSV download. t-SNE parameters are fixed
 
 ```
 index.html              web app shell
-app.js                  app logic (t-SNE run, one-hot region, k-means, purity, Cohen's d, rendering)
+app.js                  app logic (Gower distance, t-SNE run, k-means, purity, Cohen's d, rendering)
 vendor/tsne.js          t-SNE implementation (karpathy tsne, bundled locally)
 data/provinces.js       generated: window.PROVINCES (77 provinces, from provinces.csv)
 data/provinces.csv      the dataset (77 provinces × 18 factors + region + masked winner)
@@ -69,7 +68,7 @@ python scripts/build_web_data.py    # -> data/provinces.js (for the web app)
 
 ## Factors
 
-`region_name_th` (one-hot encoded), `voters_not_came_rate_pct` (1 − turnout),
+`region_name_th` (categorical), `voters_not_came_rate_pct` (1 − turnout),
 `invalid_party_list_rate_pct`, `invalid_constituency_rate_pct`,
 `households_without_internet_rate_pct`,
 `median_equivalised_monthly_household_income`, `poverty_headcount_ratio`,
