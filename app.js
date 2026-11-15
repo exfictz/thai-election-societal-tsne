@@ -290,7 +290,8 @@
     perplexity: 25, nIter: 1000, learningRate: 100, seed: 42, k: 6,
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false,
-    rightPositions: null, animating: false
+    rightPositions: null, animating: false,
+    brush: { active: false, x0: 0, y0: 0, x1: 0, y1: 0, selected: {} }
   };
   var MARGIN = 30;
   var ANIM_MS = 1200;
@@ -386,7 +387,9 @@
     requestAnimationFrame(frame);
   }
 
-  function drawWindow(canvasId, positions, colorFn) {
+  function baseAlpha(i) { return rows[i].party_name_th ? 0.9 : 0.35; }
+
+  function drawWindow(canvasId, positions, colorFn, alphaFn) {
     var canvas = $(canvasId);
     var dpr = global.devicePixelRatio || 1;
     var cw = canvas.clientWidth || 440, ch = canvas.clientHeight || 560;
@@ -399,7 +402,7 @@
     positions.forEach(function (p, i) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-      ctx.globalAlpha = rows[i].party_name_th ? 0.9 : 0.35;
+      ctx.globalAlpha = alphaFn(i);
       ctx.fillStyle = colorFn(i);
       ctx.fill();
       ctx.globalAlpha = 1;
@@ -429,20 +432,81 @@
     return api.mapLayout(rows, cw, ch, MARGIN);
   }
 
+  function geoAlpha(i) {
+    if (state.brush.active && !state.brush.selected[i]) return baseAlpha(i) * 0.5;
+    return baseAlpha(i);
+  }
+
   function drawAll() {
     var geo = geoPositions();
-    drawWindow("plot-geo", geo, function (i) { return api.partyColor(rows[i].party_name_th); });
+    drawWindow("plot-geo", geo, function (i) { return api.partyColor(rows[i].party_name_th); }, geoAlpha);
     drawLegend("plot-geo", api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; }));
 
     var right = state.rightPositions || geo;
     var rightColor = state.colorBy === "cluster" && state.labels
       ? function (i) { return api.CLUSTER_PALETTE[state.labels[i] % api.CLUSTER_PALETTE.length]; }
       : function (i) { return api.partyColor(rows[i].party_name_th); };
-    drawWindow("plot-tsne", right, rightColor);
+    drawWindow("plot-tsne", right, rightColor, baseAlpha);
+    if (state.brush.active) {
+      var canvas = $("plot-tsne");
+      var ctx = canvas.getContext("2d");
+      var b = state.brush;
+      var x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1);
+      var y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
+      ctx.strokeStyle = "#557";
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.setLineDash([]);
+    }
     var legend = state.colorBy === "cluster" && state.labels
       ? Array.from(new Set(state.labels)).sort().map(function (c) { return ["cluster C" + c, api.CLUSTER_PALETTE[c % api.CLUSTER_PALETTE.length]]; })
       : api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; });
     drawLegend("plot-tsne", legend);
+  }
+
+  function brushSelection(positions) {
+    var b = state.brush;
+    var x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1);
+    var y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
+    var sel = {};
+    positions.forEach(function (p, i) {
+      if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) sel[i] = true;
+    });
+    return sel;
+  }
+
+  function bindBrush(canvasId, positionsFn) {
+    var canvas = $(canvasId);
+    function pt(e) {
+      var rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+    canvas.addEventListener("mousedown", function (e) {
+      var p = pt(e);
+      state.brush.active = true;
+      state.brush.x0 = state.brush.x1 = p.x;
+      state.brush.y0 = state.brush.y1 = p.y;
+      state.brush.selected = {};
+      drawAll();
+      e.preventDefault();
+    });
+    canvas.addEventListener("mousemove", function (e) {
+      if (!state.brush.active) return;
+      var p = pt(e);
+      state.brush.x1 = p.x;
+      state.brush.y1 = p.y;
+      state.brush.selected = brushSelection(positionsFn());
+      drawAll();
+    });
+    function end() {
+      if (!state.brush.active) return;
+      state.brush.active = false;
+      state.brush.selected = {};
+      drawAll();
+    }
+    canvas.addEventListener("mouseup", end);
+    canvas.addEventListener("mouseleave", end);
+    global.addEventListener("mouseup", end);
   }
 
   function bindTooltip(canvasId, positionsFn) {
@@ -458,7 +522,7 @@
         if (dd <= rr && dd < bd) { bd = dd; best = { p: p, i: i }; }
       });
       var tip = $("tooltip-" + canvasId);
-      if (best) {
+      if (best && !(state.brush.active && canvasId === "plot-tsne")) {
         var r = rows[best.i];
         var html = "<b>" + r.province_name_th + "</b> — " + (r.party_name_th || "n/a") +
           " · ภาค" + (r.region_name_th || "n/a") + "<br>";
@@ -562,6 +626,7 @@
     buildControls();
     bindTooltip("plot-geo", geoPositions);
     bindTooltip("plot-tsne", function () { return state.rightPositions || geoPositions(); });
+    bindBrush("plot-tsne", function () { return state.rightPositions || geoPositions(); });
     renderTable();
     drawAll();
     global.addEventListener("resize", function () { if (!state.animating) drawAll(); });
