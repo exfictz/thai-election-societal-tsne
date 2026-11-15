@@ -289,7 +289,7 @@
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
     perplexity: 25, nIter: 1000, learningRate: 100, seed: 42, k: 6,
     colorBy: "result",
-    Y: null, labels: null, purity: null, running: false,
+    Y: null, labels: null, purity: null, running: false, pendingRun: false,
     rightPositions: null, animating: false,
     brush: { active: false, x0: 0, y0: 0, x1: 0, y1: 0, selected: {} }
   };
@@ -327,15 +327,18 @@
       r.checked = r.value === state.colorBy;
       r.addEventListener("change", function () { state.colorBy = r.value; drawAll(); });
     });
-    $("run").addEventListener("click", runAll);
+    $("sidebar").addEventListener("change", runAll);
     $("dl").addEventListener("click", downloadCSV);
   }
 
   function runAll() {
-    if (state.running) return;
-    if (!state.selected.length) { alert("Select at least one factor."); return; }
+    if (state.running) { state.pendingRun = true; return; }
+    if (!state.selected.length) {
+      $("status").textContent = "Select at least one factor.";
+      return;
+    }
     state.running = true;
-    $("run").disabled = true;
+    state.pendingRun = false;
     $("progress-wrap").style.display = "block";
     $("progress-bar").style.width = "0%";
     var nDims = api.expandFeatures(rows, state.selected).length;
@@ -351,12 +354,12 @@
         state.labels = api.kmeans(res.Y, state.k, state.seed);
         state.purity = api.purityStats(rows, state.labels);
         state.running = false;
-        $("run").disabled = false;
         $("progress-wrap").style.display = "none";
         $("status").textContent = "t-SNE done: " + res.iter + " iterations on " + nDims + " column(s). k-means k=" + state.k +
           " → overall cluster purity " + (state.purity.overall * 100).toFixed(0) + "% (share of provinces in their cluster's majority party).";
         animateToTsne();
         renderStats();
+        if (state.pendingRun) runAll();
       });
   }
 

@@ -19,8 +19,6 @@
   .slider-row { font-size:12.5px; margin:5px 0; }
   .slider-row label { display:flex; justify-content:space-between; }
   .slider-row input[type=range] { width:100%; }
-  #run { width:100%; padding:9px; font-size:14px; font-weight:600; background:var(--blue); color:#fff; border:0; border-radius:6px; cursor:pointer; margin-top:10px; }
-  #run:disabled { background:#9db8cc; cursor:wait; }
   #progress-wrap { display:none; margin-top:8px; background:#e6eef5; border-radius:5px; height:12px; overflow:hidden; }
   #progress-bar { height:100%; width:0; background:var(--blue); transition:width .15s; }
   #status { font-size:11.5px; color:#555; margin-top:6px; min-height:28px; }
@@ -58,7 +56,7 @@
 <body>
 <header>
   <h1>2026 Thai general election — which societal factors predict the winning party?</h1>
-  <p>The left window is a <b>geographic map</b> of the 77 province centroids, coloured by the party that won the most raw votes (masked from the embedding). The right window starts as the same map; select factors on the left and press <b>Calculate t-SNE</b> — the points animate from their geographic positions into the <b>t-SNE embedding computed from only the selected factors</b> (region one-hot encoded). Homogeneous single-party clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
+  <p>The left window is a <b>geographic map</b> of the 77 province centroids, coloured by the party that won the most raw votes (masked from the embedding). The right window starts as the same map; select factors on the left — the points animate from their geographic positions into the <b>t-SNE embedding computed from only the selected factors</b> (region one-hot encoded). Homogeneous single-party clusters mean the chosen factors are good predictors; mixed clusters mean try other factors. Pure client-side web app — no server needed.</p>
 </header>
 <div id="layout">
   <div id="sidebar">
@@ -69,7 +67,6 @@
     <h2>Colour (t-SNE window)</h2>
     <div class="radio-row"><label><input type="radio" name="colorby" value="result" checked> colour by winning party</label></div>
     <div class="radio-row"><label><input type="radio" name="colorby" value="cluster"> colour by cluster</label></div>
-    <button id="run">▶ Calculate t-SNE</button>
     <div id="progress-wrap"><div id="progress-bar"></div></div>
     <div id="status"></div>
     <button id="dl">⬇ Download provinces CSV</button>
