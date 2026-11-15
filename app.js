@@ -291,7 +291,8 @@
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false, pendingRun: false,
     rightPositions: null, animating: false,
-    brush: { active: false, x0: 0, y0: 0, x1: 0, y1: 0, selected: {} }
+    brush: { active: false, x0: 0, y0: 0, x1: 0, y1: 0, selected: {} },
+    hoverCluster: null
   };
   var MARGIN = 30;
   var ANIM_MS = 1200;
@@ -325,7 +326,13 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('input[name="colorby"]'), function (r) {
       r.checked = r.value === state.colorBy;
-      r.addEventListener("change", function () { state.colorBy = r.value; drawAll(); });
+      r.addEventListener("change", function () {
+        state.colorBy = r.value;
+        state.brush.active = false;
+        state.brush.selected = {};
+        state.hoverCluster = null;
+        drawAll();
+      });
     });
     $("sidebar").addEventListener("change", runAll);
     $("dl").addEventListener("click", downloadCSV);
@@ -353,6 +360,7 @@
         state.Y = res.Y;
         state.labels = api.kmeans(res.Y, state.k, state.seed);
         state.purity = api.purityStats(rows, state.labels);
+        state.hoverCluster = null;
         state.running = false;
         $("progress-wrap").style.display = "none";
         $("status").textContent = "t-SNE done: " + res.iter + " iterations on " + nDims + " column(s). k-means k=" + state.k +
@@ -436,7 +444,18 @@
   }
 
   function geoAlpha(i) {
+    if (state.colorBy === "cluster") {
+      if (state.hoverCluster !== null && state.labels && state.labels[i] !== state.hoverCluster) return baseAlpha(i) * 0.2;
+      return baseAlpha(i);
+    }
     if (state.brush.active && !state.brush.selected[i]) return baseAlpha(i) * 0.2;
+    return baseAlpha(i);
+  }
+
+  function tsneAlpha(i) {
+    if (state.colorBy === "cluster" && state.hoverCluster !== null && state.labels && state.labels[i] !== state.hoverCluster) {
+      return baseAlpha(i) * 0.2;
+    }
     return baseAlpha(i);
   }
 
@@ -449,8 +468,8 @@
     var rightColor = state.colorBy === "cluster" && state.labels
       ? function (i) { return api.CLUSTER_PALETTE[state.labels[i] % api.CLUSTER_PALETTE.length]; }
       : function (i) { return api.partyColor(rows[i].party_name_th); };
-    drawWindow("plot-tsne", right, rightColor, baseAlpha);
-    if (state.brush.active) {
+    drawWindow("plot-tsne", right, rightColor, tsneAlpha);
+    if (state.brush.active && state.colorBy !== "cluster") {
       var canvas = $("plot-tsne");
       var ctx = canvas.getContext("2d");
       var b = state.brush;
@@ -485,6 +504,7 @@
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     }
     canvas.addEventListener("mousedown", function (e) {
+      if (state.colorBy === "cluster") return;
       var p = pt(e);
       state.brush.active = true;
       state.brush.x0 = state.brush.x1 = p.x;
@@ -494,7 +514,7 @@
       e.preventDefault();
     });
     canvas.addEventListener("mousemove", function (e) {
-      if (!state.brush.active) return;
+      if (!state.brush.active || state.colorBy === "cluster") return;
       var p = pt(e);
       state.brush.x1 = p.x;
       state.brush.y1 = p.y;
@@ -524,6 +544,13 @@
         var rr = p.r * p.r;
         if (dd <= rr && dd < bd) { bd = dd; best = { p: p, i: i }; }
       });
+      if (canvasId === "plot-tsne") {
+        var hc = (state.colorBy === "cluster" && state.labels && best) ? state.labels[best.i] : null;
+        if (hc !== state.hoverCluster) {
+          state.hoverCluster = hc;
+          drawAll();
+        }
+      }
       var tip = $("tooltip-" + canvasId);
       if (best && !(state.brush.active && canvasId === "plot-tsne")) {
         var r = rows[best.i];
@@ -541,7 +568,13 @@
         tip.style.top = Math.min(my + 14, rect.height - 120) + "px";
       } else tip.style.display = "none";
     });
-    canvas.addEventListener("mouseleave", function () { $("tooltip-" + canvasId).style.display = "none"; });
+    canvas.addEventListener("mouseleave", function () {
+      if (canvasId === "plot-tsne" && state.hoverCluster !== null) {
+        state.hoverCluster = null;
+        drawAll();
+      }
+      $("tooltip-" + canvasId).style.display = "none";
+    });
   }
 
   function renderStats() {
