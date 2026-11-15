@@ -285,7 +285,7 @@ const $=id=>document.getElementById(id),rows=DATA.rows,parties=[...new Set(rows.
 const factorGroups=[['demographic','ลักษณะประชากร'],['education','การศึกษา'],['economy','เศรษฐกิจ'],['political','การมีส่วนร่วมทางการเมือง']];
 const allKeys=factorGroups.flatMap(g=>DATA.groups[g[0]]);
 let highestUnlockedScene=0;
-let scene=0,mode='geo',selected=new Set(),K=4,perplexity=20,seed=42,embedding=null,clusters=null,chosen=null,analysisSignature='',busy=false;
+let scene=0,mode='geo',selected=new Set(),K=4,perplexity=25,seed=42,embedding=null,clusters=null,chosen=null,analysisSignature='',busy=false;
 const customClusterNames={};
 const editingClusterNames=new Set();
 const FIXED_SEED=42;
@@ -326,7 +326,7 @@ function tsne(X,perp,seed){const n=X.length,r=rand(seed),D=Array.from({length:n}
 let P=Array.from({length:n},()=>new Float64Array(n)),target=Math.log(perp);for(let i=0;i<n;i++){let beta=1,low=-Infinity,high=Infinity;for(let t=0;t<55;t++){let sum=0,entropy=0;for(let j=0;j<n;j++){let p=i===j?0:Math.exp(-D[i][j]*beta);P[i][j]=p;sum+=p;entropy+=p*D[i][j]}let h=Math.log(sum||1e-100)+beta*entropy/(sum||1e-100);if(Math.abs(h-target)<1e-5)break;if(h>target){low=beta;beta=high===Infinity?beta*2:(beta+high)/2}else{high=beta;beta=low===-Infinity?beta/2:(beta+low)/2}}let sum=P[i].reduce((a,b)=>a+b,0)||1;for(let j=0;j<n;j++)P[i][j]/=sum}
 for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let v=(P[i][j]+P[j][i])/(2*n);P[i][j]=P[j][i]=Math.max(v,1e-12)}
 let Y=Array.from({length:n},()=>[(r()-.5)*.0002,(r()-.5)*.0002]),vel=Array.from({length:n},()=>[0,0]),gains=Array.from({length:n},()=>[1,1]);const Q=Array.from({length:n},()=>new Float64Array(n));
-for(let iter=0;iter<500;iter++){let qsum=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let dx=Y[i][0]-Y[j][0],dy=Y[i][1]-Y[j][1],q=1/(1+dx*dx+dy*dy);Q[i][j]=Q[j][i]=q;qsum+=2*q}let grads=Array.from({length:n},()=>[0,0]),ex=iter<100?4:1;
+for(let iter=0;iter<1000;iter++){let qsum=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let dx=Y[i][0]-Y[j][0],dy=Y[i][1]-Y[j][1],q=1/(1+dx*dx+dy*dy);Q[i][j]=Q[j][i]=q;qsum+=2*q}let grads=Array.from({length:n},()=>[0,0]),ex=iter<100?4:1;
 for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let a=4*(ex*P[i][j]-Q[i][j]/(qsum||1))*Q[i][j],dx=a*(Y[i][0]-Y[j][0]),dy=a*(Y[i][1]-Y[j][1]);grads[i][0]+=dx;grads[i][1]+=dy;grads[j][0]-=dx;grads[j][1]-=dy}
 let mom=iter<250?.5:.8,lr=100;for(let i=0;i<n;i++)for(let a=0;a<2;a++){let g=grads[i][a],old=vel[i][a];gains[i][a]=Math.max(.01,(g>0)!==(old>0)?gains[i][a]+.2:gains[i][a]*.8);vel[i][a]=mom*old-lr*gains[i][a]*g;Y[i][a]+=vel[i][a]}
 let mean=[0,0];Y.forEach(v=>{mean[0]+=v[0];mean[1]+=v[1]});mean=mean.map(v=>v/n);Y.forEach(v=>{v[0]-=mean[0];v[1]-=mean[1]})}return Y}
@@ -334,43 +334,44 @@ function fit(coords,mode){let xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]),minX
 // Display-only collision avoidance: preserve t-SNE and K-means calculations.
 // Place all circle centres at least 24px apart; leave the top label band clear.
 function separateOverlappingDots(input){
- const original=input.map(p=>[p[0],p[1]]),points=input.map(p=>[p[0],p[1]]);
- const minGap=24,margin=27,left=margin,right=850-margin,top=207,bottom=760-margin;
- const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
- for(let iter=0;iter<650;iter++){
-   let collisions=0;
-   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
-     let dx=points[j][0]-points[i][0],dy=points[j][1]-points[i][1];
-     let d=Math.hypot(dx,dy);
-     if(d>=minGap-0.02)continue;
-     if(d<1e-7){let angle=((i*71+j*137)%360)*Math.PI/180;dx=Math.cos(angle);dy=Math.sin(angle);d=1}
-     const push=(minGap-d)*0.52,ux=dx/d,uy=dy/d;
-     points[i][0]-=ux*push;points[i][1]-=uy*push;
-     points[j][0]+=ux*push;points[j][1]+=uy*push;
-     collisions++;
-   }
-   // Weak attraction keeps the result recognizable as the original embedding.
-   const pull=iter<300?0.012:0.002;
-   for(let i=0;i<points.length;i++){
-     points[i][0]=clamp(points[i][0]+(original[i][0]-points[i][0])*pull,left,right);
-     points[i][1]=clamp(points[i][1]+(original[i][1]-points[i][1])*pull,top,bottom);
-   }
-   if(!collisions&&iter>30)break;
- }
- // Final collision-only passes guarantee separation even after attraction.
- for(let iter=0;iter<250;iter++){
-   let overlaps=0;
-   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
-     let dx=points[j][0]-points[i][0],dy=points[j][1]-points[i][1],d=Math.hypot(dx,dy);
-     if(d>=minGap-0.001)continue;
-     if(d<1e-7){dx=1;dy=0;d=1}
-     const a=(minGap-d+0.002)/2,ux=dx/d,uy=dy/d;
-     points[i][0]-=ux*a;points[i][1]-=uy*a;
-     points[j][0]+=ux*a;points[j][1]+=uy*a;overlaps++;
-   }
-   if(!overlaps)break;
- }
- return points;
+ return input.map(p=>[p[0],p[1]]);
+ // # const original=input.map(p=>[p[0],p[1]]),points=input.map(p=>[p[0],p[1]]);
+ // # const minGap=24,margin=27,left=margin,right=850-margin,top=207,bottom=760-margin;
+ // # const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ // # for(let iter=0;iter<650;iter++){
+ // #   let collisions=0;
+ // #   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
+ // #     let dx=points[j][0]-points[i][0],dy=points[j][1]-points[i][1];
+ // #     let d=Math.hypot(dx,dy);
+ // #     if(d>=minGap-0.02)continue;
+ // #     if(d<1e-7){let angle=((i*71+j*137)%360)*Math.PI/180;dx=Math.cos(angle);dy=Math.sin(angle);d=1}
+ // #     const push=(minGap-d)*0.52,ux=dx/d,uy=dy/d;
+ // #     points[i][0]-=ux*push;points[i][1]-=uy*push;
+ // #     points[j][0]+=ux*push;points[j][1]+=uy*push;
+ // #     collisions++;
+ // #   }
+ // #   // Weak attraction keeps the result recognizable as the original embedding.
+ // #   const pull=iter<300?0.012:0.002;
+ // #   for(let i=0;i<points.length;i++){
+ // #     points[i][0]=clamp(points[i][0]+(original[i][0]-points[i][0])*pull,left,right);
+ // #     points[i][1]=clamp(points[i][1]+(original[i][1]-points[i][1])*pull,top,bottom);
+ // #   }
+ // #   if(!collisions&&iter>30)break;
+ // # }
+ // # // Final collision-only passes guarantee separation even after attraction.
+ // # for(let iter=0;iter<250;iter++){
+ // #   let overlaps=0;
+ // #   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
+ // #     let dx=points[j][0]-points[i][0],dy=points[j][1]-points[i][1],d=Math.hypot(dx,dy);
+ // #     if(d>=minGap-0.001)continue;
+ // #     if(d<1e-7){dx=1;dy=0;d=1}
+ // #     const a=(minGap-d+0.002)/2,ux=dx/d,uy=dy/d;
+ // #     points[i][0]-=ux*a;points[i][1]-=uy*a;
+ // #     points[j][0]+=ux*a;points[j][1]+=uy*a;overlaps++;
+ // #   }
+ // #   if(!overlaps)break;
+ // # }
+ // # return points;
 }
 function groupedCoords(){let k=K,boxW=810/(k<=4?2:3),colsBox=k<=4?2:3,rowsBox=Math.ceil(k/colsBox),boxH=710/rowsBox;return rows.map((_,i)=>{let c=clusters?clusters[i]:0,ids=rows.map((_,j)=>j).filter(j=>(clusters?clusters[j]:0)===c),pos=ids.indexOf(i),ncols=Math.max(3,Math.ceil(Math.sqrt(ids.length*boxW/boxH))),nrows=Math.ceil(ids.length/ncols),step=Math.min(31,(boxW-36)/Math.max(ncols,1),(boxH-75)/Math.max(nrows,1)),row=Math.floor(pos/ncols),col=pos%ncols;return [20+(c%colsBox)*boxW+boxW/2+(col-(Math.min(ncols,ids.length-row*ncols)-1)/2)*step,20+Math.floor(c/colsBox)*boxH+67+row*step]})}
 function el(tag,attrs={}){let n=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));return n}
@@ -381,17 +382,38 @@ function winningParty(d){return d[ballotField()]}
 function activeColor(i){return partyColor(winningParty(rows[i]))}
 function currentXY(){return mode==='geo'?fit(geoXY,'geo'):mode==='tsne'&&embedding?separateOverlappingDots(fit(embedding,'tsne')):mode==='grouped'?groupedCoords():fit(geoXY,'geo')}
 const brush={active:false,moved:false,x0:0,y0:0,x1:0,y1:0,selected:{}};
-let latestTsneCoords=[];
+let latestTsneCoords=[],tsneHulls=[],hoveredClusters=new Set();
 function svgPoint(svgEl,e){
  const pt=svgEl.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
  const ctm=svgEl.getScreenCTM();if(ctm)return pt.matrixTransform(ctm.inverse());
  const r=svgEl.getBoundingClientRect();return {x:(e.clientX-r.left)*(850/Math.max(1,r.width)),y:(e.clientY-r.top)*(760/Math.max(1,r.height))};
 }
+function pointInPolygon(x,y,poly){
+ let inside=false;
+ for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+  if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;
+ }
+ return inside;
+}
+function updateGeoOpacity(){
+ rows.forEach((d,i)=>{
+  const geoCircle=$('pGeo'+d.province_code);
+  if(!geoCircle)return;
+  if(brush.active){
+   geoCircle.style.opacity=brush.selected[i]?1:.2;
+  }else if(scene===5&&mode==='tsne'&&clusters&&hoveredClusters.size>0){
+   geoCircle.style.opacity=hoveredClusters.has(clusters[i])?1:.2;
+  }else{
+   geoCircle.style.opacity=1;
+  }
+ });
+}
 function updateBrushUI(){
  const rect=$('brushRect');if(!rect)return;
  if(!brush.active){
   rect.classList.add('hidden');
-  rows.forEach(d=>{const c=$('pGeo'+d.province_code);if(c)c.style.opacity=1});
+  updateGeoOpacity();
   return;
  }
  const minX=Math.min(brush.x0,brush.x1),maxX=Math.max(brush.x0,brush.x1);
@@ -402,14 +424,12 @@ function updateBrushUI(){
  brush.selected={};
  rows.forEach((d,i)=>{
   const p=latestTsneCoords[i]||[0,0];
-  const inside=p[0]>=minX&&p[0]<=maxX&&p[1]>=minY&&p[1]<=maxY;
-  brush.selected[i]=inside;
-  const geoCircle=$('pGeo'+d.province_code);
-  if(geoCircle)geoCircle.style.opacity=inside?1:.2;
+  brush.selected[i]=p[0]>=minX&&p[0]<=maxX&&p[1]>=minY&&p[1]<=maxY;
  });
+ updateGeoOpacity();
 }
 function clearBrush(){
- if(!brush.active&&!Object.keys(brush.selected).length)return;
+ if(!brush.active&&!Object.keys(brush.selected).length){updateGeoOpacity();return}
  brush.active=false;brush.selected={};updateBrushUI();
 }
 function drawMap(){
@@ -422,6 +442,7 @@ function drawMap(){
   const geoCoords=fit(geoXY,'geo');
   const tsneCoords=mode==='tsne'&&embedding?separateOverlappingDots(fit(embedding,'tsne')):geoCoords;
   latestTsneCoords=tsneCoords;
+  if(mode!=='tsne'||!embedding){tsneHulls=[];hoveredClusters.clear()}
   const geoLayer=$('geoBackground'),tsneLayer=$('tsneBackground');
   if(geoLayer)geoLayer.replaceChildren();
   if(tsneLayer){tsneLayer.replaceChildren();clusterOverlay(tsneLayer,tsneCoords)}
@@ -430,7 +451,6 @@ function drawMap(){
    if(cGeo){
     cGeo.setAttribute('cx',geoCoords[i][0]);cGeo.setAttribute('cy',geoCoords[i][1]);
     cGeo.setAttribute('fill',activeColor(i));cGeo.setAttribute('r',chosen===i?15:12);
-    cGeo.style.opacity=brush.active&&!brush.selected[i]?.2:1;
     cGeo.classList.toggle('picked',chosen===i);
    }
    const cTsne=$('pTsne'+d.province_code);
@@ -441,6 +461,7 @@ function drawMap(){
     cTsne.classList.toggle('picked',chosen===i);
    }
   });
+  updateGeoOpacity();
   drawClusterLabels('vizTsne','tsneClusterLabels');
  }else{
   $('maptype').textContent=mode==='geo'?'ภาพรวมการเลือกตั้ง':'จังหวัดที่มีข้อมูลคล้ายกัน';
@@ -495,6 +516,8 @@ function hull(points){
  lo.pop();up.pop();return lo.concat(up);
 }
 function clusterOverlay(layer,coords){
+ const isTsnePane=layer&&layer.id==='tsneBackground';
+ if(isTsnePane)tsneHulls=[];
  if(mode!=='tsne'||!embedding||!clusters)return;
  for(let c=0;c<K;c++){
   const ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c),pts=ids.map(i=>coords[i]);if(!pts.length)continue;
@@ -509,12 +532,15 @@ function clusterOverlay(layer,coords){
   }
   const expanded=hull(perimeter);
   if(expanded.length>=3){
-    layer.append(el('polygon',{
+    const poly=el('polygon',{
       points:expanded.map(p=>p.join(',')).join(' '),
       fill:color,'fill-opacity':'.075',stroke:color,
       'stroke-opacity':'.75','stroke-width':2,
-      'stroke-dasharray':'7 5','stroke-linejoin':'round'
-    }));
+      'stroke-dasharray':'7 5','stroke-linejoin':'round',
+      'data-cluster':c
+    });
+    layer.append(poly);
+    if(isTsnePane)tsneHulls.push({c,poly:expanded});
   }
 
  }
@@ -643,7 +669,7 @@ function go(i){
  selected=new Set(DATA.groups[scenes[scene][3]]);mode='tsne';calculate();
 }
 function csvExport(){let head=['province_code','province_name_th','nesdc_region_name_th','party_name_th','cluster','tsne_x','tsne_y',...selected],line=[head.join(',')];rows.forEach((d,i)=>{let fields=[d.province_code,d.province_name_th,d.nesdc_region_name_th,d.party_name_th,(clusters?.[i]??0)+1,embedding?.[i]?.[0]??'',embedding?.[i]?.[1]??'',...[...selected].map(k=>d[k])];line.push(fields.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))});let blob=new Blob(['\ufeff'+line.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='election_2569_tsne_clusters.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix([...selected]);perplexity=20;seed=FIXED_SEED;const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}else{K=Number(choice);clusters=kmeans(X,K,seed)};embedding=tsne(X,perplexity,seed);mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 500 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
+async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix([...selected]);perplexity=25;seed=FIXED_SEED;const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}else{K=Number(choice);clusters=kmeans(X,K,seed)};embedding=tsne(X,perplexity,seed);mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 1000 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
 function positionChartTooltip(t,e){
   // Compact, left-opening tooltip, matching the first scene's hover cards.
   const margin=12, gap=12;
@@ -706,15 +732,24 @@ svgTsne.addEventListener('mousedown',e=>{
  updateBrushUI();
 });
 svgTsne.addEventListener('mousemove',e=>{
- if(!brush.active)return;
  const p=svgPoint(svgTsne,e);
- brush.x1=p.x;brush.y1=p.y;
- if(Math.hypot(brush.x1-brush.x0,brush.y1-brush.y0)>3)brush.moved=true;
- $('tip').style.display='none';
- updateBrushUI();
+ if(brush.active){
+  brush.x1=p.x;brush.y1=p.y;
+  if(Math.hypot(brush.x1-brush.x0,brush.y1-brush.y0)>3)brush.moved=true;
+  $('tip').style.display='none';
+  updateBrushUI();
+  return;
+ }
+ hoveredClusters.clear();
+ if(scene===5&&mode==='tsne'&&embedding&&clusters&&!e.target.closest('.cluster-label-hover')){
+  for(const h of tsneHulls){
+   if(pointInPolygon(p.x,p.y,h.poly))hoveredClusters.add(h.c);
+  }
+ }
+ updateGeoOpacity();
 });
 svgTsne.addEventListener('mouseup',()=>clearBrush());
-svgTsne.addEventListener('mouseleave',()=>clearBrush());
+svgTsne.addEventListener('mouseleave',()=>{hoveredClusters.clear();clearBrush()});
 window.addEventListener('mouseup',()=>clearBrush());
 document.querySelectorAll('input[name="ballotType"]').forEach(el=>el.onchange=()=>draw());$('clusterK').oninput=()=>{$('clusterKValue').textContent=$('clusterK').value+' กลุ่ม'};$('clusterK').onchange=()=>{if(scene===5&&selected.size)calculate()};$('allFactors').onclick=()=>{selected=new Set(allKeys);$('clusterAccordion').open=true;factorsUI();calculate()};$('viewSummary').onclick=()=>{$('clusterAccordion').open=true;requestAnimationFrame(()=>{$('summarySection').scrollIntoView({behavior:'smooth',block:'start'});});};$('clearFactors').onclick=()=>{selected.clear();embedding=null;mode='geo';factorsUI();$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map อัตโนมัติ';draw()};$('back').onclick=()=>go(scene-1);$('next').onclick=()=>{if(scene<5){highestUnlockedScene=Math.max(highestUnlockedScene,scene+1);go(scene+1)}};clusters=kmeans(standardMatrix(allKeys),K,seed);go(0)}
 initialize();
