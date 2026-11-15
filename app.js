@@ -32,7 +32,9 @@
     "เพื่อไทย": "#E30F13",
     "ประชาธิปัตย์": "#30A1E9",
     "ภูมิใจไทย": "#312783",
-    "กล้าธรรม": "#4EC86F"
+    "กล้าธรรม": "#4EC86F",
+    "พลังประชารัฐ": "#1F68DD",
+    "ไทรวมพลัง": "#FD318C"
   };
   var FALLBACK_PALETTE = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3"];
   var CLUSTER_PALETTE = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#666666", "#8da0cb", "#fc8d62", "#66c2a5", "#ffd92f", "#b3b3b3", "#e41a1c", "#377eb8"];
@@ -169,14 +171,16 @@
     return labels;
   }
 
-  function purityStats(rows, labels) {
+  function purityStats(rows, labels, partyKey) {
+    var pk = partyKey || "party_name_th";
     var byCluster = {};
     rows.forEach(function (r, i) {
-      if (!r.party_name_th) return;
+      var p = r[pk];
+      if (!p) return;
       var c = labels[i];
       if (!byCluster[c]) byCluster[c] = { size: 0, counts: {} };
       byCluster[c].size++;
-      byCluster[c].counts[r.party_name_th] = (byCluster[c].counts[r.party_name_th] || 0) + 1;
+      byCluster[c].counts[p] = (byCluster[c].counts[p] || 0) + 1;
     });
     var clusters = Object.keys(byCluster).map(function (c) {
       var g = byCluster[c];
@@ -194,20 +198,22 @@
     return { clusters: clusters, overall: overall };
   }
 
-  function parties(rows, minCount) {
+  function parties(rows, minCount, partyKey) {
+    var pk = partyKey || "party_name_th";
     var counts = {};
-    rows.forEach(function (r) { if (r.party_name_th) counts[r.party_name_th] = (counts[r.party_name_th] || 0) + 1; });
+    rows.forEach(function (r) { var p = r[pk]; if (p) counts[p] = (counts[p] || 0) + 1; });
     return Object.keys(counts).filter(function (p) { return counts[p] >= (minCount || 1); })
       .sort(function (a, b) { return counts[b] - counts[a]; });
   }
 
-  function cohensD(rows, feats, partyList) {
+  function cohensD(rows, feats, partyList, partyKey) {
+    var pk = partyKey || "party_name_th";
     return partyList.map(function (party) {
       var ds = feats.map(function (f) {
         var def = FEATURE_MAP[f];
         if (def && def.categorical) return { key: f, label: def.label, d: 0 };
-        var a = rows.filter(function (r) { return r.party_name_th === party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
-        var b = rows.filter(function (r) { return r.party_name_th !== party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
+        var a = rows.filter(function (r) { return r[pk] === party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
+        var b = rows.filter(function (r) { return r[pk] !== party; }).map(function (r) { return r[f]; }).filter(function (v) { return v !== null && !isNaN(v); });
         if (a.length < 2 || b.length < 2) return { key: f, label: def.label, d: 0 };
         var ma = a.reduce(function (s, v) { return s + v; }, 0) / a.length;
         var mb = b.reduce(function (s, v) { return s + v; }, 0) / b.length;
@@ -290,6 +296,7 @@
   var state = {
     selected: ["region_name_th", "median_equivalised_monthly_household_income", "higher_edu_25plus_pct", "urban_population_pct"],
     perplexity: 25, nIter: 1000, learningRate: 100, seed: 42, k: 6,
+    partyKey: "party_name_th",
     colorBy: "result",
     Y: null, labels: null, purity: null, running: false, pendingRun: false,
     rightPositions: null, animating: false,
@@ -326,6 +333,22 @@
     }
     slider("k", "k", 2, 6, 1);
 
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="ballottype"]'), function (r) {
+      r.checked = r.value === state.partyKey;
+      r.addEventListener("change", function () {
+        state.partyKey = r.value;
+        if (state.labels) {
+          state.purity = api.purityStats(rows, state.labels, state.partyKey);
+          renderStats();
+          if (!state.running) {
+            $("status").textContent = "t-SNE done: " + state.nIter + " iterations on " + state.selected.length + " factor(s) (Gower distance). k-means k=" + state.k +
+              " → overall cluster purity " + (state.purity.overall * 100).toFixed(0) + "% (share of provinces in their cluster's majority party).";
+          }
+        }
+        drawAll();
+      });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('input[name="colorby"]'), function (r) {
       r.checked = r.value === state.colorBy;
       r.addEventListener("change", function () {
@@ -336,7 +359,10 @@
         drawAll();
       });
     });
-    $("sidebar").addEventListener("change", runAll);
+    $("sidebar").addEventListener("change", function (e) {
+      if (e.target && (e.target.name === "colorby" || e.target.name === "ballottype")) return;
+      runAll();
+    });
     $("dl").addEventListener("click", downloadCSV);
   }
 
@@ -361,7 +387,7 @@
       .then(function (res) {
         state.Y = res.Y;
         state.labels = api.kmeans(res.Y, state.k, state.seed);
-        state.purity = api.purityStats(rows, state.labels);
+        state.purity = api.purityStats(rows, state.labels, state.partyKey);
         state.hoverCluster = null;
         state.running = false;
         $("progress-wrap").style.display = "none";
@@ -400,7 +426,7 @@
     requestAnimationFrame(frame);
   }
 
-  function baseAlpha(i) { return rows[i].party_name_th ? 0.9 : 0.35; }
+  function baseAlpha(i) { return rows[i][state.partyKey] ? 0.9 : 0.35; }
 
   function drawWindow(canvasId, positions, colorFn, alphaFn) {
     var canvas = $(canvasId);
@@ -463,13 +489,13 @@
 
   function drawAll() {
     var geo = geoPositions();
-    drawWindow("plot-geo", geo, function (i) { return api.partyColor(rows[i].party_name_th); }, geoAlpha);
-    drawLegend("plot-geo", api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; }));
+    drawWindow("plot-geo", geo, function (i) { return api.partyColor(rows[i][state.partyKey]); }, geoAlpha);
+    drawLegend("plot-geo", api.parties(rows, 1, state.partyKey).map(function (p) { return [p, api.partyColor(p)]; }));
 
     var right = state.rightPositions || geo;
     var rightColor = state.colorBy === "cluster" && state.labels
       ? function (i) { return api.CLUSTER_PALETTE[state.labels[i] % api.CLUSTER_PALETTE.length]; }
-      : function (i) { return api.partyColor(rows[i].party_name_th); };
+      : function (i) { return api.partyColor(rows[i][state.partyKey]); };
     drawWindow("plot-tsne", right, rightColor, tsneAlpha);
     if (state.brush.active && state.colorBy !== "cluster") {
       var canvas = $("plot-tsne");
@@ -484,7 +510,7 @@
     }
     var legend = state.colorBy === "cluster" && state.labels
       ? Array.from(new Set(state.labels)).sort().map(function (c) { return ["cluster C" + c, api.CLUSTER_PALETTE[c % api.CLUSTER_PALETTE.length]]; })
-      : api.parties(rows).map(function (p) { return [p, api.partyColor(p)]; });
+      : api.parties(rows, 1, state.partyKey).map(function (p) { return [p, api.partyColor(p)]; });
     drawLegend("plot-tsne", legend);
   }
 
@@ -556,7 +582,7 @@
       var tip = $("tooltip-" + canvasId);
       if (best && !(state.brush.active && canvasId === "plot-tsne")) {
         var r = rows[best.i];
-        var html = "<b>" + r.province_name_th + "</b> — " + (r.party_name_th || "n/a") +
+        var html = "<b>" + r.province_name_th + "</b> — " + (r[state.partyKey] || "n/a") +
           " · ภาค" + (r.region_name_th || "n/a") + "<br>";
         state.selected.forEach(function (f) {
           var def = api.FEATURE_MAP[f];
@@ -628,7 +654,7 @@
   function renderTable() {
     var t = $("datatable");
     t.innerHTML = "";
-    var cols = ["province_name_th", "region_name_th", "party_name_th"].concat(api.FEATURES.map(function (f) { return f.key; }).filter(function (k) { return k !== "region_name_th"; }));
+    var cols = ["province_name_th", "region_name_th", "party_name_th", "constituency_party_name_th"].concat(api.FEATURES.map(function (f) { return f.key; }).filter(function (k) { return k !== "region_name_th"; }));
     var head = el("tr");
     cols.forEach(function (c) { head.appendChild(el("th", null, c)); });
     t.appendChild(head);
@@ -643,7 +669,7 @@
   }
 
   function downloadCSV() {
-    var cols = ["province_code", "province_name_th", "region_name_th", "party_name_th", "lat", "lon"]
+    var cols = ["province_code", "province_name_th", "region_name_th", "party_name_th", "constituency_party_name_th", "lat", "lon"]
       .concat(api.FEATURES.map(function (f) { return f.key; }).filter(function (k) { return k !== "region_name_th"; }));
     var lines = [cols.join(",")];
     rows.forEach(function (r) {

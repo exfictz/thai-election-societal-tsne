@@ -77,7 +77,9 @@ python scripts/build_web_data.py    # -> data/provinces.js (for the web app)
 `urban_population_pct`, `population_age_60_plus_pct`, `population_change_pct`,
 `skip_generation_households_pct`, `higher_edu_25plus_pct`, `poverty_pct`,
 `nfe_student_pct`, `no_higher_edu_rate`; plus `party_name_th` (party with the most
-raw votes — masked from the embedding) and province lat/lon for the map view.
+raw party-list votes — masked from the embedding), `constituency_party_name_th` (party
+with the most raw constituency votes — masked from the embedding), and province lat/lon
+for the map view.
 
 ## Caveats
 

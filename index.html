@@ -64,6 +64,9 @@
     <div id="factors"></div>
     <h2>Cluster analysis (k-means on embedding)</h2>
     <div class="slider-row"><label>k <span id="k-val"></span></label><input type="range" id="k"></div>
+    <h2>Ballot type (winning party)</h2>
+    <div class="radio-row"><label><input type="radio" name="ballottype" value="party_name_th" checked> party-list ballot (บัญชีรายชื่อ)</label></div>
+    <div class="radio-row"><label><input type="radio" name="ballottype" value="constituency_party_name_th"> constituency ballot (แบ่งเขต)</label></div>
     <h2>Colour (t-SNE window)</h2>
     <div class="radio-row"><label><input type="radio" name="colorby" value="result" checked> colour by winning party</label></div>
     <div class="radio-row"><label><input type="radio" name="colorby" value="cluster"> colour by cluster</label></div>
@@ -104,7 +107,7 @@
   <div class="scroll" style="max-height:340px"><table id="datatable"></table></div>
 </div>
 <footer>
-  Result: the party with the most raw votes (combined party-list count) per province in the 2026 Thai general election; it is never an input to the embedding.<br>
+  Result: the party with the most raw votes (combined party-list or constituency count) per province in the 2026 Thai general election; it is never an input to the embedding.<br>
   Factors: region (กลาง / ตะวันออกเฉียงเหนือ / เหนือ / ใต้), province-level turnout (1 − turnout), invalid party-list / constituency ballot rates, household internet, median equivalised monthly household income, poverty headcount ratio &amp; poverty %, equivalised income Gini, household debt-to-monthly-income ratio, employment YoY change, agriculture &amp; manufacturing GPP shares, urban population %, population 60+ % and population change, skip-generation households %, higher education (25+) %, non-formal education students %, no-higher-education rate. Province centroids for the map view come from polygon-derived centroid data.<br>
   Embedding: t-SNE (tsne.js, bundled locally) on pairwise Gower distances over the selected heterogeneous factors; the winning party is never an input. Hover a point for details; the map view uses province centroids (equirectangular projection).
 </footer>

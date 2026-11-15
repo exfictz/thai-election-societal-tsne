@@ -7,7 +7,8 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 FIELDS = [
-    "province_code", "province_name_th", "region_name_th", "party_name_th",
+    "province_code", "province_name_th", "region_name_th",
+    "party_name_th", "constituency_party_name_th",
     "lat", "lon",
     "voters_not_came_rate_pct", "invalid_party_list_rate_pct",
     "invalid_constituency_rate_pct", "households_without_internet_rate_pct",
@@ -19,7 +20,7 @@ FIELDS = [
     "skip_generation_households_pct", "higher_edu_25plus_pct",
     "poverty_pct", "nfe_student_pct", "no_higher_edu_rate",
 ]
-TEXT = {"province_name_th", "region_name_th", "party_name_th"}
+TEXT = {"province_name_th", "region_name_th", "party_name_th", "constituency_party_name_th"}
 
 
 def main():
