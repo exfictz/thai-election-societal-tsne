@@ -696,7 +696,7 @@ function clusterOverlay(layer,coords){
   const ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c),pts=ids.map(i=>coords[i]);if(!pts.length)continue;
   // Build a padded convex hull around the entire circle footprint.
   // Works for narrow vertical chains and even collinear/single-point clusters.
-  const color=clusterPalette[c%clusterPalette.length],pad=16;
+  const color=clusterPalette[c%clusterPalette.length],pad=24;
   const perimeter=[];
   for(const [x,y] of pts){
     for(let angle=0;angle<Math.PI*2;angle+=Math.PI/8){
