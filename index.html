@@ -259,9 +259,72 @@ max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;}
 #vizTsne{cursor:crosshair}
 .brush-rect{fill:rgba(49,90,122,0.08);stroke:#315a7a;stroke-width:1.8;stroke-dasharray:5 4;pointer-events:none}
 @media(max-width:820px){.dual-viz{grid-template-columns:1fr}}
+
+/* Cluster headings: improve readability without altering party colors */
+.cluster-name-title{display:block;font-size:19px;line-height:1.55;font-weight:700;letter-spacing:0;overflow-wrap:anywhere;}
+@media(max-width:600px){.cluster-name-title{font-size:18px;}}
+
+/* Cluster labels live above the plot, at their original readable height. */
+.scene6-cluster-labels{display:flex;flex-direction:column;gap:8px;margin:10px 0 12px;position:relative;z-index:2;flex-shrink:0}
+.scene6-cluster-labels:empty{display:none}
+.scene6-cluster-label{display:flex;align-items:flex-start;gap:7px;min-height:36px;padding:5px 9px;background:#fff;border:1.6px solid var(--cluster-color);border-radius:9px;cursor:help;box-sizing:border-box}
+.scene6-cluster-swatch{width:9px;height:18px;flex:0 0 9px;margin-top:4px;border-radius:3px;background:var(--cluster-color)}
+.scene6-cluster-text{min-width:0;line-height:1.35;display:flex;align-items:baseline;flex-wrap:wrap;column-gap:9px;row-gap:2px}
+.scene6-cluster-name{font-size:12px;font-weight:700;color:#244158;overflow-wrap:anywhere}
+.scene6-cluster-count{font-size:11px;font-weight:600;color:#52697b;margin-top:0;white-space:nowrap;flex-shrink:0}
+
+/* Shared cluster label layout for Scenes 2–6; labels are outside the SVG. */
+.standard-cluster-labels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 12px}
+.standard-cluster-labels:empty{display:none}
+.standard-cluster-labels .scene6-cluster-label{min-height:36px}
+.geo-cluster-spacer{height:0;flex:none;box-sizing:border-box}
+@media(max-width:600px){.standard-cluster-labels{grid-template-columns:1fr}}
+
+/* Cluster labels outside SVGs; full-width two-column grid for Scene 6. */
+.scene6-layout{min-width:0}
+.scene6-layout.hidden{display:none!important}
+.scene6-layout>.scene6-cluster-labels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;box-sizing:border-box;margin:10px 0 16px}
+.scene6-layout>.scene6-cluster-labels:empty{display:none}
+.scene6-layout>.dual-viz{align-items:start}
+.scene6-layout .dual-pane{min-width:0}
+.scene6-layout .scene6-cluster-name{font-size:12px;line-height:1.35}
+@media(max-width:600px){.scene6-layout>.scene6-cluster-labels{grid-template-columns:1fr}}
+
+/* Wide responsive dashboard and equal-height primary panels */
+@media (min-width:1051px){
+  header,.shell{max-width:none!important;width:100%!important;margin-left:auto!important;margin-right:auto!important;}
+  header{padding-left:clamp(12px,1.25vw,24px)!important;padding-right:clamp(12px,1.25vw,24px)!important;}
+  .shell{padding-left:clamp(12px,1.25vw,24px)!important;padding-right:clamp(12px,1.25vw,24px)!important;}
+  .layout{align-items:stretch!important;grid-template-columns:minmax(0,1.7fr) minmax(320px,.9fr)!important;}
+  .layout>.main,.layout>.side{height:auto!important;min-height:100%!important;max-height:none!important;min-width:0;align-self:stretch!important;}
+}
+@media (max-width:1050px){
+  .layout>.main,.layout>.side{height:auto!important;max-height:none!important;min-height:0!important;}
+}
+
+/* Scene 6: left chart determines both panel heights; only the right panel scrolls. */
+@media (min-width:1051px){
+ .layout:has(>.scene6-side){align-items:start!important;}
+ .layout:has(>.scene6-side)>.main{height:auto!important;min-height:0!important;align-self:start!important;}
+ .layout>.side.scene6-side{
+   box-sizing:border-box!important;
+   height:var(--scene6-panel-height,720px)!important;
+   min-height:0!important;
+   max-height:var(--scene6-panel-height,720px)!important;
+   overflow-y:auto!important;
+   overflow-x:hidden!important;
+   align-self:start!important;
+   display:block!important;
+   scrollbar-width:thin;
+   overscroll-behavior:contain;
+ }
+}
+@media (max-width:1050px){
+ .layout>.side.scene6-side{height:auto!important;max-height:none!important;overflow:visible!important;}
+}
 </style></head><body>
 <header><div><div class="eyebrow">BEYOND THE BALLOT  /  ข้อมูลการเลือกตั้ง</div><h1>ผลการเลือกตั้งซ่อนอะไรเรา?</h1></div></header>
-<div class="shell"><div class="top-navigation"><div class="progress" id="steps"></div><div class="nav nav-top"><button id="back">← ก่อนหน้า</button><button id="next">ถัดไป →</button></div></div><div class="layout"><main class="card main"><div class="maphead"><div><div class="eyebrow" id="maptype">ภาพรวมการเลือกตั้ง</div><h2 id="maptitle">ประเทศไทยผ่านผลการเลือกตั้ง</h2></div><div id="ballotSwitch" class="ballotSwitch hidden" role="group" aria-label="รูปแบบผลเลือกตั้ง"><label class="ballotOption"><input type="radio" name="ballotType" value="list" checked><span>บัญชีรายชื่อ</span></label><label class="ballotOption"><input type="radio" name="ballotType" value="constituency"><span>แบ่งเขต</span></label></div></div><svg id="viz" viewBox="0 0 850 760" aria-label="แผนภาพ 77 จังหวัด"></svg><div id="scene6Dual" class="dual-viz hidden"><div class="dual-pane"><div class="dual-pane-head"><div class="eyebrow">แผนที่ภูมิศาสตร์ (Geographic Map)</div><h3>ตำแหน่งจังหวัดตามภูมิศาสตร์ · สีตามพรรคอันดับหนึ่ง</h3></div><svg id="vizGeo" viewBox="0 0 850 760" aria-label="แผนที่ภูมิศาสตร์ 77 จังหวัด"></svg></div><div class="dual-pane"><div class="dual-pane-head"><div class="eyebrow" id="vizTsneEyebrow">การจัดกลุ่มตามตัวชี้วัด (t-SNE Embedding)</div><h3 id="vizTsneTitle">ลากเมาส์คลุมจุด (Brush) เพื่อเปรียบเทียบตำแหน่งบนแผนที่</h3></div><svg id="vizTsne" viewBox="0 0 850 760" aria-label="แผนภาพ t-SNE 77 จังหวัด"></svg></div></div><div class="legend" id="legend"></div></main>
+<div class="shell"><div class="top-navigation"><div class="progress" id="steps"></div><div class="nav nav-top"><button id="back">← ก่อนหน้า</button><button id="next">ถัดไป →</button></div></div><div class="layout"><main class="card main"><div class="maphead"><div><div class="eyebrow" id="maptype">ภาพรวมการเลือกตั้ง</div><h2 id="maptitle">ประเทศไทยผ่านผลการเลือกตั้ง</h2></div><div id="ballotSwitch" class="ballotSwitch hidden" role="group" aria-label="รูปแบบผลเลือกตั้ง"><label class="ballotOption"><input type="radio" name="ballotType" value="list" checked><span>บัญชีรายชื่อ</span></label><label class="ballotOption"><input type="radio" name="ballotType" value="constituency"><span>แบ่งเขต</span></label></div></div><div id="standardClusterLabels" class="standard-cluster-labels" aria-label="รายชื่อกลุ่มจังหวัด"></div><svg id="viz" viewBox="0 0 850 760" aria-label="แผนภาพ 77 จังหวัด"></svg><div id="scene6Dual" class="scene6-layout hidden"><div id="scene6ClusterLabels" class="scene6-cluster-labels" aria-label="รายชื่อกลุ่มจังหวัด"></div><div class="dual-viz"><div class="dual-pane"><div class="dual-pane-head"><div class="eyebrow">แผนที่ภูมิศาสตร์ (Geographic Map)</div><h3>ตำแหน่งจังหวัดตามภูมิศาสตร์ · สีตามพรรคอันดับหนึ่ง</h3></div><svg id="vizGeo" viewBox="0 0 850 760" aria-label="แผนที่ภูมิศาสตร์ 77 จังหวัด"></svg></div><div class="dual-pane"><div class="dual-pane-head"><div class="eyebrow" id="vizTsneEyebrow">การจัดกลุ่มตามตัวชี้วัด (t-SNE Embedding)</div><h3 id="vizTsneTitle">ลากเมาส์คลุมจุด (Brush) เพื่อเปรียบเทียบตำแหน่งบนแผนที่</h3></div><svg id="vizTsne" viewBox="0 0 850 760" aria-label="แผนภาพ t-SNE 77 จังหวัด"></svg></div></div></div><div class="legend" id="legend"></div></main>
 <aside class="card side"><h2 id="title"></h2><div class="story" id="story"></div><section id="scene1Summary" class="scene1-summary hidden" aria-label="สรุปพรรคอันดับหนึ่งรายจังหวัด"></section>
 <section id="filterSection" class="scene6-section"><h3 class="scene6-section-title">ตัวกรอง</h3><div class="cluster-slider-full hidden"><label for="clusterK" class="cluster-slider-label">จำนวนกลุ่ม: <strong id="clusterKValue">4 กลุ่ม</strong></label><input type="range" id="clusterK" min="2" max="6" step="1" value="4" aria-label="ปรับจำนวนกลุ่ม"></div><details id="exploreControls" class="accordion-panel" open><summary class="accordion-heading">เลือกข้อมูลที่อยากเปรียบเทียบ</summary><div class="accordion-body"><div class="btnrow"><button class="btn" id="allFactors">เลือกทั้งหมด</button><button class="btn" id="clearFactors">ล้างที่เลือก</button><button class="btn btn-view-summary" id="viewSummary" type="button">ดูสรุป ↓</button></div><div class="factors" id="factors"></div>
 
@@ -330,7 +393,7 @@ for(let iter=0;iter<1000;iter++){let qsum=0;for(let i=0;i<n;i++)for(let j=i+1;j<
 for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let a=4*(ex*P[i][j]-Q[i][j]/(qsum||1))*Q[i][j],dx=a*(Y[i][0]-Y[j][0]),dy=a*(Y[i][1]-Y[j][1]);grads[i][0]+=dx;grads[i][1]+=dy;grads[j][0]-=dx;grads[j][1]-=dy}
 let mom=iter<250?.5:.8,lr=100;for(let i=0;i<n;i++)for(let a=0;a<2;a++){let g=grads[i][a],old=vel[i][a];gains[i][a]=Math.max(.01,(g>0)!==(old>0)?gains[i][a]+.2:gains[i][a]*.8);vel[i][a]=mom*old-lr*gains[i][a]*g;Y[i][a]+=vel[i][a]}
 let mean=[0,0];Y.forEach(v=>{mean[0]+=v[0];mean[1]+=v[1]});mean=mean.map(v=>v/n);Y.forEach(v=>{v[0]-=mean[0];v[1]-=mean[1]})}return Y}
-function fit(coords,mode){let xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);let width=mode==='geo'?405:700,height=mode==='geo'?670:510,s=Math.min(width/Math.max(1,maxX-minX),height/Math.max(1,maxY-minY));return coords.map(([x,y])=>[425+(x-(minX+maxX)/2)*s,(mode==='geo'?380:460)+(y-(minY+maxY)/2)*s])}
+function fit(coords,mode){let xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);let width=mode==='geo'?620:770,height=mode==='geo'?680:680,s=Math.min(width/Math.max(1,maxX-minX),height/Math.max(1,maxY-minY));return coords.map(([x,y])=>[425+(x-(minX+maxX)/2)*s,380+(y-(minY+maxY)/2)*s])}
 // Display-only collision avoidance: preserve t-SNE and K-means calculations.
 // Place all circle centres at least 24px apart; leave the top label band clear.
 function separateOverlappingDots(input){
@@ -373,6 +436,35 @@ function separateOverlappingDots(input){
  // # }
  // # return points;
 }
+// Presentation-only cluster separation. The original t-SNE embedding and K-means
+// memberships are untouched; each group's internal 2D geometry is retained.
+function clearClusterLayout(raw){
+ if(!clusters||!raw||!raw.length)return raw;
+ const count=K, cols=count<=2?count:count<=4?2:3, nr=Math.ceil(count/cols);
+ const left=32,right=818,top=182,bottom=726;
+ const cellW=(right-left)/cols,cellH=(bottom-top)/nr;
+ const inset=37;const result=new Array(raw.length);
+ // Order cells by original t-SNE cluster centroids, rather than cluster ID.
+ const groups=Array.from({length:count},(_,c)=>{
+  const ids=raw.map((_,i)=>i).filter(i=>clusters[i]===c);
+  const cx=ids.reduce((a,i)=>a+raw[i][0],0)/Math.max(1,ids.length);
+  const cy=ids.reduce((a,i)=>a+raw[i][1],0)/Math.max(1,ids.length);
+  return {c,ids,cx,cy};
+ });
+ const sorted=[...groups].sort((a,b)=>a.cy-b.cy||a.cx-b.cx);
+ // Assign each group to a separate non-overlapping region.
+ sorted.forEach((g,index)=>{
+  const col=index%cols,row=Math.floor(index/cols);
+  const centerX=left+(col+.5)*cellW,centerY=top+(row+.5)*cellH;
+  const availW=Math.max(18,cellW-2*inset),availH=Math.max(18,cellH-2*inset);
+  const xs=g.ids.map(i=>raw[i][0]),ys=g.ids.map(i=>raw[i][1]);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const spanX=Math.max(1,maxX-minX),spanY=Math.max(1,maxY-minY);
+  const scale=Math.min(availW/spanX,availH/spanY,1.7);
+  g.ids.forEach(i=>{result[i]=[centerX+(raw[i][0]-(minX+maxX)/2)*scale,centerY+(raw[i][1]-(minY+maxY)/2)*scale]});
+ });
+ return result;
+}
 function groupedCoords(){let k=K,boxW=810/(k<=4?2:3),colsBox=k<=4?2:3,rowsBox=Math.ceil(k/colsBox),boxH=710/rowsBox;return rows.map((_,i)=>{let c=clusters?clusters[i]:0,ids=rows.map((_,j)=>j).filter(j=>(clusters?clusters[j]:0)===c),pos=ids.indexOf(i),ncols=Math.max(3,Math.ceil(Math.sqrt(ids.length*boxW/boxH))),nrows=Math.ceil(ids.length/ncols),step=Math.min(31,(boxW-36)/Math.max(ncols,1),(boxH-75)/Math.max(nrows,1)),row=Math.floor(pos/ncols),col=pos%ncols;return [20+(c%colsBox)*boxW+boxW/2+(col-(Math.min(ncols,ids.length-row*ncols)-1)/2)*step,20+Math.floor(c/colsBox)*boxH+67+row*step]})}
 function el(tag,attrs={}){let n=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));return n}
 function partyColor(p){return partyColors[p]||'#8899AA'}
@@ -380,7 +472,7 @@ function ballotField(){return scene===5&&document.querySelector('input[name="bal
 function ballotLabel(){return ballotField()==='party_name_th'?'บัญชีรายชื่อ':'แบ่งเขต'}
 function winningParty(d){return d[ballotField()]}
 function activeColor(i){return partyColor(winningParty(rows[i]))}
-function currentXY(){return mode==='geo'?fit(geoXY,'geo'):mode==='tsne'&&embedding?separateOverlappingDots(fit(embedding,'tsne')):mode==='grouped'?groupedCoords():fit(geoXY,'geo')}
+function currentXY(){return mode==='geo'?fit(geoXY,'geo'):mode==='tsne'&&embedding?clearClusterLayout(fit(embedding,'tsne')):mode==='grouped'?groupedCoords():fit(geoXY,'geo')}
 const brush={active:false,moved:false,x0:0,y0:0,x1:0,y1:0,selected:{}};
 let latestTsneCoords=[],tsneHulls=[],hoveredClusters=new Set();
 function svgPoint(svgEl,e){
@@ -395,21 +487,6 @@ function pointInPolygon(x,y,poly){
   if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;
  }
  return inside;
-}
-function pointInClusterRings(x,y,rings){
- let inside=false;
- for(const poly of rings)if(pointInPolygon(x,y,poly))inside=!inside;
- return inside;
-}
-function distToSeg(px,py,ax,ay,bx,by){
- const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
- if(!l2)return Math.hypot(px-ax,py-ay);
- const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l2));
- return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));
-}
-function segsIntersect(ax,ay,bx,by,cx,cy,dx,dy){
- const ccw=(p1x,p1y,p2x,p2y,p3x,p3y)=>(p3y-p1y)*(p2x-p1x)>(p2y-p1y)*(p3x-p1x);
- return (ccw(ax,ay,cx,cy,dx,dy)!==ccw(bx,by,cx,cy,dx,dy))&&(ccw(ax,ay,bx,by,cx,cy)!==ccw(ax,ay,bx,by,dx,dy));
 }
 function updateGeoOpacity(){
  rows.forEach((d,i)=>{
@@ -447,6 +524,33 @@ function clearBrush(){
  if(!brush.active&&!Object.keys(brush.selected).length){updateGeoOpacity();return}
  brush.active=false;brush.selected={};updateBrushUI();
 }
+function renderStandardClusterLabels(){
+ const host=$('standardClusterLabels');if(!host)return;
+ host.replaceChildren();
+ if(scene===0||scene===5||mode!=='tsne'||!embedding||!clusters)return;
+ for(let c=0;c<K;c++){
+  const name=clusterName(c),count=clusters.filter(v=>v===c).length;
+  const color=clusterPalette[c%clusterPalette.length];
+  const item=document.createElement('div');item.className='scene6-cluster-label';
+  item.style.setProperty('--cluster-color',color);
+  const swatch=document.createElement('span');swatch.className='scene6-cluster-swatch';
+  const content=document.createElement('div');content.className='scene6-cluster-text';
+  const heading=document.createElement('div');heading.className='scene6-cluster-name';heading.textContent='C'+(c+1)+' · '+name;
+  const countEl=document.createElement('div');countEl.className='scene6-cluster-count';countEl.textContent=count+' จังหวัด';
+  content.append(heading,countEl);item.append(swatch,content);
+  item.addEventListener('mousemove',e=>{
+   const names=rows.filter((_,i)=>clusters[i]===c).map(d=>d.province_name_th).sort((a,b)=>a.localeCompare(b,'th'));
+   const tip=$('tip');tip.textContent='กลุ่ม '+(c+1)+' · '+name+'\n'+count+' จังหวัด\n\n'+names.join(' · ');
+   tip.style.display='block';tip.style.maxWidth='380px';
+   tip.style.left=Math.max(8,Math.min(e.clientX+14,innerWidth-395))+'px';
+   tip.style.top=Math.max(8,Math.min(e.clientY+12,innerHeight-tip.offsetHeight-8))+'px';
+  });
+  item.addEventListener('mouseleave',()=>{$('tip').style.display='none'});
+  host.append(item);
+ }
+}
+function alignScene6ChartTops(){ /* Both charts share the same grid row. */ }
+window.addEventListener('resize',()=>{if(scene===5)alignScene6ChartTops()});
 function drawMap(){
  const free=scene===5,coords=currentXY();
  if(free){
@@ -455,7 +559,7 @@ function drawMap(){
   const tsneEyebrow=$('vizTsneEyebrow');
   if(tsneEyebrow)tsneEyebrow.textContent=mode==='tsne'&&embedding?'การจัดกลุ่มตามตัวชี้วัด (t-SNE · '+K+' กลุ่ม)':'การจัดกลุ่มตามตัวชี้วัด (รอเลือกตัวชี้วัด)';
   const geoCoords=fit(geoXY,'geo');
-  const tsneCoords=mode==='tsne'&&embedding?separateOverlappingDots(fit(embedding,'tsne')):geoCoords;
+  const tsneCoords=mode==='tsne'&&embedding?clearClusterLayout(fit(embedding,'tsne')):geoCoords;
   latestTsneCoords=tsneCoords;
   if(mode!=='tsne'||!embedding){tsneHulls=[];hoveredClusters.clear()}
   const geoLayer=$('geoBackground'),tsneLayer=$('tsneBackground');
@@ -492,28 +596,55 @@ function drawMap(){
 // Give each group a short, distinct and interpretable name based on its
 // standardized indicator profile, without changing the clustering itself.
 function autoClusterNames(){
- const keys=[...selected],names=[];
+ // Describe each group using a distinct characteristic where possible.
+ const keys=[...selected];
  if(!clusters||!keys.length)return Array.from({length:K},(_,c)=>'กลุ่ม '+(c+1));
  const profiles=Array.from({length:K},(_,c)=>{
   const ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c);
-  return keys.map(k=>({key:k,z:ids.length?ids.reduce((sum,i)=>sum+(Number(rows[i][k])||0),0)/ids.length:0}));
+  return keys.map(key=>({key,z:ids.length?ids.reduce((sum,i)=>sum+(Number(rows[i][key])||0),0)/ids.length:0}));
  });
- const used=new Set();
- for(let c=0;c<K;c++){
-  const ranked=profiles[c].map(p=>{
-   const others=profiles.filter((_,i)=>i!==c).map(v=>v.find(x=>x.key===p.key)?.z||0);
-   const contrast=p.z-(others.length?others.reduce((a,b)=>a+b,0)/others.length:0);
-   return {...p,contrast};
-  }).sort((a,b)=>Math.abs(b.contrast)-Math.abs(a.contrast)||Math.abs(b.z)-Math.abs(a.z));
-  let chosen=null,caption='';
-  for(const p of ranked){
-   const direction=p.z>=.3?'สูง':p.z<=-.3?'ต่ำ':'ใกล้ค่าเฉลี่ย';
-   const label=DATA.labels[p.key];
-   const candidate=direction==='ใกล้ค่าเฉลี่ย'?'ค่าค่อนข้างใกล้ค่าเฉลี่ยด้าน'+label:label+(direction==='สูง'?'สูงกว่าเฉลี่ย':'ต่ำกว่าเฉลี่ย');
-   if(!used.has(candidate)){chosen=p;caption=candidate;break}
+ // In the education scene, avoid naming two groups with opposite descriptions
+ // of the same indicator. Give each group a different education characteristic.
+ if(scene===2){
+  const educationKeys=DATA.groups.education.filter(key=>keys.includes(key));
+  const descriptions={
+   higher_edu_zscore:'การศึกษาระดับอุดมศึกษา',
+   poverty_zscore:'ข้อจำกัดด้านการศึกษา',
+   nfe_zscore:'การศึกษานอกระบบ',
+   no_higher_edu_zscore:'การศึกษาต่ำกว่าระดับอุดมศึกษา'
+  };
+  const chosen=Array(K).fill(null),used=new Set();
+  // Assign distinct indicators by searching for the best overall descriptive fit.
+  let bestScore=-Infinity,best=null;
+  function search(c,score,assignment){
+   if(c===K){if(score>bestScore){bestScore=score;best=[...assignment]}return}
+   for(const key of educationKeys){
+    if(used.has(key))continue;
+    const p=profiles[c].find(v=>v.key===key);
+    const z=p?p.z:0;
+    // Prefer a pronounced characteristic; positive values read naturally.
+    const strength=Math.abs(z)+(z>0?0.08:0);
+    used.add(key);assignment.push({key,z});search(c+1,score+strength,assignment);assignment.pop();used.delete(key);
+   }
   }
-  if(!chosen){const p=ranked[0];caption=p?DATA.labels[p.key]+' (กลุ่ม '+(c+1)+')':'กลุ่ม '+(c+1)}
-  used.add(caption);names.push(caption);
+  if(educationKeys.length>=K)search(0,0,[]);
+  if(best){return best.map(({key,z})=>{
+   const level=z>0.35?'อยู่ในระดับสูง':z< -0.35?'อยู่ในระดับต่ำ':'อยู่ในระดับปานกลาง';
+   return (descriptions[key]||filterLabels[key]||'ข้อมูลการศึกษา')+' '+level;
+  })}
+ }
+ const used=new Set(),names=[];
+ for(let c=0;c<K;c++){
+  const ranked=[...profiles[c]].sort((a,b)=>Math.abs(b.z)-Math.abs(a.z));
+  let chosen='';
+  for(const p of ranked){
+   const label=filterLabels[p.key]||DATA.labels[p.key]||'ข้อมูลจังหวัด';
+   const level=p.z>0.35?'อยู่ในระดับสูง':p.z< -0.35?'อยู่ในระดับต่ำ':'อยู่ในระดับปานกลาง';
+   const candidate=label+' '+level;
+   if(!used.has(candidate)){chosen=candidate;break}
+  }
+  if(!chosen)chosen='รูปแบบข้อมูลกลุ่มที่ '+(c+1);
+  used.add(chosen);names.push(chosen);
  }
  return names;
 }
@@ -530,250 +661,68 @@ function hull(points){
  for(let i=a.length-1;i>=0;i--){const p=a[i];while(up.length>1&&cross(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}
  lo.pop();up.pop();return lo.concat(up);
 }
-function extractClusterPolygons(coords,clusters,K){
- const allAddedSegs=[];
- const clusterOrder=Array.from({length:K},(_,c)=>c).sort((a,b)=>{
-  const ca=coords.filter((_,i)=>clusters[i]===a).length;
-  const cb=coords.filter((_,i)=>clusters[i]===b).length;
-  return ca-cb;
- });
- const skeletons=Array.from({length:K},()=>[]);
- for(const c of clusterOrder){
-  const own=coords.filter((_,i)=>clusters[i]===c);
-  const foreign=coords.filter((_,i)=>clusters[i]!==c);
-  const segs=own.map(([x,y])=>({ax:x,ay:y,bx:x,by:y,minX:x,maxX:x,minY:y,maxY:y}));
-  skeletons[c]=segs;
-  if(own.length<=1)continue;
-  const edges=[];
-  for(let i=0;i<own.length;i++)for(let j=i+1;j<own.length;j++)edges.push({i,j,d:Math.hypot(own[i][0]-own[j][0],own[i][1]-own[j][1])});
-  edges.sort((a,b)=>a.d-b.d);
-  const segClearance=(ax,ay,bx,by)=>{
-   let m=Infinity;
-   for(const [fx,fy] of foreign)m=Math.min(m,distToSeg(fx,fy,ax,ay,bx,by));
-   for(const s of allAddedSegs){
-    if(s.c===c)continue;
-    if(segsIntersect(ax,ay,bx,by,s.ax,s.ay,s.bx,s.by))return 0;
-    m=Math.min(m,distToSeg(s.ax,s.ay,ax,ay,bx,by),distToSeg(s.bx,s.by,ax,ay,bx,by),distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by),distToSeg(bx,by,s.ax,s.ay,s.bx,s.by));
-   }
-   return m;
-  };
-  const parent=own.map((_,i)=>i),find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
-  const union=(i,j)=>{const ri=find(i),rj=find(j);if(ri!==rj){parent[ri]=rj;return true}return false};
-  const seenSeg=new Set();
-  const addSeg=(ax,ay,bx,by)=>{
-   const k1=Math.round(ax)+","+Math.round(ay)+"-"+Math.round(bx)+","+Math.round(by);
-   const k2=Math.round(bx)+","+Math.round(by)+"-"+Math.round(ax)+","+Math.round(ay);
-   if(seenSeg.has(k1)||seenSeg.has(k2))return;
-   seenSeg.add(k1);
-   segs.push({ax,ay,bx,by,minX:Math.min(ax,bx),maxX:Math.max(ax,bx),minY:Math.min(ay,by),maxY:Math.max(ay,by)});
-   allAddedSegs.push({c,ax,ay,bx,by});
-  };
-  for(const e of edges){
-   if(find(e.i)===find(e.j))continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j],clear=segClearance(ax,ay,bx,by);
-   if(clear>=15&&e.d<280){addSeg(ax,ay,bx,by);union(e.i,e.j)}
-  }
-  const deg=new Int32Array(own.length);
-  for(const e of edges){
-   if(e.d>160||deg[e.i]>=4||deg[e.j]>=4)continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
-   if(segClearance(ax,ay,bx,by)<16)continue;
-   const mx=(ax+bx)/2,my=(ay+by)/2,rad=e.d/2;
-   if(foreign.some(([fx,fy])=>Math.hypot(fx-mx,fy-my)<rad*0.85))continue;
-   addSeg(ax,ay,bx,by);union(e.i,e.j);deg[e.i]++;deg[e.j]++;
-  }
-  for(const e of edges){
-   if(find(e.i)===find(e.j)||e.d>450)continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
-   if(segClearance(ax,ay,bx,by)>=13.5){addSeg(ax,ay,bx,by);union(e.i,e.j);continue}
-   const mx=(ax+bx)/2,my=(ay+by)/2,ux=-(by-ay)/e.d,uy=(bx-ax)/e.d;
-   let bestPts=null,bestClear=13;
-   for(const off of [24,-24,42,-42,62,-62,84,-84,108,-108,136,-136,168,-168]){
-    const cx=mx+ux*off,cy=my+uy*off;
-    if(cx<18||cx>832||cy<80||cy>742)continue;
-    const ptsB=[];
-    for(let t=0;t<=6;t++){const s=t/6,u=1-s;ptsB.push([u*u*ax+2*u*s*cx+s*s*bx,u*u*ay+2*u*s*cy+s*s*by])}
-    let cMin=Infinity;
-    for(let s=0;s<6;s++)cMin=Math.min(cMin,segClearance(ptsB[s][0],ptsB[s][1],ptsB[s+1][0],ptsB[s+1][1]));
-    if(cMin>bestClear){bestClear=cMin;bestPts=ptsB;break}
-   }
-   if(bestPts){for(let s=0;s<bestPts.length-1;s++)addSeg(bestPts[s][0],bestPts[s][1],bestPts[s+1][0],bestPts[s+1][1]);union(e.i,e.j)}
-  }
- }
- const step=6,cols=Math.ceil(850/step)+1,rowsG=Math.ceil(760/step)+1;
- const distGrid=Array.from({length:K},()=>new Float32Array(cols*rowsG));
- for(let c=0;c<K;c++){
-  const segs=skeletons[c],grid=distGrid[c];
-  grid.fill(1e6);
-  if(!segs.length)continue;
-  for(let r=0;r<rowsG;r++){
-   const y=r*step,rowOff=r*cols;
-   for(let col=0;col<cols;col++){
-    const x=col*step;
-    let minD=60;
-    for(let i=0;i<segs.length;i++){
-     const s=segs[i];
-     if(x<s.minX-minD||x>s.maxX+minD||y<s.minY-minD||y>s.maxY+minD)continue;
-     const d=distToSeg(x,y,s.ax,s.ay,s.bx,s.by);
-     if(d<minD)minD=d;
-    }
-    grid[rowOff+col]=Math.max(0,minD-3);
-   }
-  }
- }
- const pad=21,halfGap=2.8;
- const rawRings=Array.from({length:K},()=>[]);
- for(let c=0;c<K;c++){
-  const phi=new Float32Array(cols*rowsG),ownG=distGrid[c];
-  for(let idx=0;idx<cols*rowsG;idx++){
-   const dc=ownG[idx];
-   if(dc>pad+6){phi[idx]=-10;continue}
-   let dOther=Infinity;
-   for(let c2=0;c2<K;c2++)if(c2!==c&&distGrid[c2][idx]<dOther)dOther=distGrid[c2][idx];
-   phi[idx]=Math.min(pad-dc,(dOther-dc)/2-halfGap);
-  }
-  for(let col=0;col<cols;col++){phi[col]=-10;phi[(rowsG-1)*cols+col]=-10}
-  for(let r=0;r<rowsG;r++){phi[r*cols]=-10;phi[r*cols+(cols-1)]=-10}
-  const segments=[];
-  const interp=(x1,y1,v1,x2,y2,v2)=>{const t=v1/(v1-v2);return [x1+t*(x2-x1),y1+t*(y2-y1)]};
-  for(let r=0;r<rowsG-1;r++){
-   const y0=r*step,y1=(r+1)*step;
-   for(let col=0;col<cols-1;col++){
-    const x0=col*step,x1=(col+1)*step;
-    const v0=phi[r*cols+col],v1=phi[r*cols+col+1],v2=phi[(r+1)*cols+col+1],v3=phi[(r+1)*cols+col];
-    const mask=(v0>=0?1:0)|(v1>=0?2:0)|(v2>=0?4:0)|(v3>=0?8:0);
-    if(mask===0||mask===15)continue;
-    const top=()=>interp(x0,y0,v0,x1,y0,v1);
-    const right=()=>interp(x1,y0,v1,x1,y1,v2);
-    const bottom=()=>interp(x0,y1,v3,x1,y1,v2);
-    const left=()=>interp(x0,y0,v0,x0,y1,v3);
-    switch(mask){
-     case 1: segments.push([left(),top()]);break;
-     case 2: segments.push([top(),right()]);break;
-     case 3: segments.push([left(),right()]);break;
-     case 4: segments.push([right(),bottom()]);break;
-     case 5: {
-      const center=(v0+v1+v2+v3)/4;
-      if(center>=0){segments.push([left(),bottom()]);segments.push([right(),top()])}
-      else{segments.push([left(),top()]);segments.push([right(),bottom()])}
-      break;
-     }
-     case 6: segments.push([top(),bottom()]);break;
-     case 7: segments.push([left(),bottom()]);break;
-     case 8: segments.push([bottom(),left()]);break;
-     case 9: segments.push([bottom(),top()]);break;
-     case 10: {
-      const center=(v0+v1+v2+v3)/4;
-      if(center>=0){segments.push([top(),left()]);segments.push([bottom(),right()])}
-      else{segments.push([top(),right()]);segments.push([bottom(),left()])}
-      break;
-     }
-     case 11: segments.push([bottom(),right()]);break;
-     case 12: segments.push([right(),left()]);break;
-     case 13: segments.push([right(),top()]);break;
-     case 14: segments.push([top(),left()]);break;
-    }
-   }
-  }
-  const key=p=>Math.round(p[0]*100)+","+Math.round(p[1]*100);
-  const nextMap=new Map();
-  segments.forEach((seg,idx)=>{
-   const k=key(seg[0]);
-   if(!nextMap.has(k))nextMap.set(k,[]);
-   nextMap.get(k).push(idx);
-  });
-  const used=new Uint8Array(segments.length);
-  for(let i=0;i<segments.length;i++){
-   if(used[i])continue;
-   used[i]=1;
-   const ring=[segments[i][0],segments[i][1]];
-   let curr=segments[i][1];
-   while(true){
-    const list=nextMap.get(key(curr));
-    if(!list)break;
-    const nxtIdx=list.find(idx=>!used[idx]);
-    if(nxtIdx===undefined)break;
-    used[nxtIdx]=1;
-    curr=segments[nxtIdx][1];
-    if(Math.hypot(curr[0]-ring[0][0],curr[1]-ring[0][1])<0.05)break;
-    ring.push(curr);
-   }
-   if(ring.length>=4){
-    let smooth=ring;
-    for(let pass=0;pass<3;pass++){
-     const next=[];
-     for(let j=0;j<smooth.length;j++){
-      const p0=smooth[j],p1=smooth[(j+1)%smooth.length];
-      next.push([0.75*p0[0]+0.25*p1[0],0.75*p0[1]+0.25*p1[1]]);
-      next.push([0.25*p0[0]+0.75*p1[0],0.25*p0[1]+0.75*p1[1]]);
-     }
-     smooth=next;
-    }
-    rawRings[c].push(smooth);
-   }
-  }
- }
- return Array.from({length:K},(_,c)=>{
-  const rings=rawRings[c];
-  const foreign=coords.filter((_,i)=>clusters[i]!==c);
-  return rings.filter((r,idx)=>{
-   const isHole=rings.some((other,j)=>j!==idx&&pointInPolygon(r[0][0],r[0][1],other));
-   if(!isHole)return true;
-   const hasForeign=foreign.some(([fx,fy])=>pointInPolygon(fx,fy,r));
-   const hasOtherRing=rawRings.some((otherRings,c2)=>c2!==c&&otherRings.some(or=>pointInPolygon(or[0][0],or[0][1],r)));
-   return hasForeign||hasOtherRing;
-  });
- });
-}
 function clusterOverlay(layer,coords){
  const isTsnePane=layer&&layer.id==='tsneBackground';
  if(isTsnePane)tsneHulls=[];
+ const htmlLabels=$('scene6ClusterLabels');
+ if(htmlLabels&&scene===5){
+   htmlLabels.replaceChildren();
+   if(mode==='tsne'&&embedding&&clusters){
+     for(let c=0;c<K;c++){
+       const name=clusterName(c),count=clusters.filter(v=>v===c).length;
+       const color=clusterPalette[c%clusterPalette.length];
+       const item=document.createElement('div');item.className='scene6-cluster-label';
+       item.style.setProperty('--cluster-color',color);
+       const swatch=document.createElement('span');swatch.className='scene6-cluster-swatch';
+       const textBox=document.createElement('div');textBox.className='scene6-cluster-text';
+       const heading=document.createElement('div');heading.className='scene6-cluster-name';heading.textContent='C'+(c+1)+' · '+name;
+       const countEl=document.createElement('div');countEl.className='scene6-cluster-count';countEl.textContent=count+' จังหวัด';
+       textBox.append(heading,countEl);item.append(swatch,textBox);
+       item.addEventListener('mousemove',e=>{
+         if(brush.active)return;
+         const names=rows.filter((_,i)=>clusters[i]===c).map(d=>d.province_name_th).sort((a,b)=>a.localeCompare(b,'th'));
+         const tip=$('tip');tip.textContent='กลุ่ม '+(c+1)+' · '+name+'\n'+count+' จังหวัด\n\n'+names.join(' · ');
+         tip.style.display='block';tip.style.maxWidth='380px';
+         tip.style.left=Math.max(8,Math.min(e.clientX+14,innerWidth-395))+'px';
+         tip.style.top=Math.max(8,Math.min(e.clientY+12,innerHeight-tip.offsetHeight-12))+'px';
+       });
+       item.addEventListener('mouseleave',()=>{$('tip').style.display='none'});
+       htmlLabels.append(item);
+     }
+   }
+ }
  if(mode!=='tsne'||!embedding||!clusters)return;
- const ringsByCluster=extractClusterPolygons(coords,clusters,K);
  for(let c=0;c<K;c++){
-  const rings=ringsByCluster[c];if(!rings||!rings.length)continue;
-  const color=clusterPalette[c%clusterPalette.length];
-  const d=rings.map(r=>'M'+r.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')+'Z').join(' ');
-  const path=el('path',{
-   d,
-   fill:color,'fill-opacity':'.075','fill-rule':'evenodd',
-   stroke:color,'stroke-opacity':'.75','stroke-width':2,
-   'stroke-dasharray':'7 5','stroke-linejoin':'round','stroke-linecap':'round',
-   'data-cluster':c
-  });
-  layer.append(path);
-  if(isTsnePane)tsneHulls.push({c,rings});
+  const ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c),pts=ids.map(i=>coords[i]);if(!pts.length)continue;
+  // Build a padded convex hull around the entire circle footprint.
+  // Works for narrow vertical chains and even collinear/single-point clusters.
+  const color=clusterPalette[c%clusterPalette.length],pad=16;
+  const perimeter=[];
+  for(const [x,y] of pts){
+    for(let angle=0;angle<Math.PI*2;angle+=Math.PI/8){
+      perimeter.push([x+pad*Math.cos(angle),y+pad*Math.sin(angle)]);
+    }
+  }
+  const expanded=hull(perimeter);
+  if(expanded.length>=3){
+    const poly=el('polygon',{
+      points:expanded.map(p=>p.join(',')).join(' '),
+      fill:color,'fill-opacity':'.075',stroke:color,
+      'stroke-opacity':'.75','stroke-width':2,
+      'stroke-dasharray':'7 5','stroke-linejoin':'round',
+      'data-cluster':c
+    });
+    layer.append(poly);
+    if(isTsnePane)tsneHulls.push({c,poly:expanded});
+  }
+
  }
 }
 
 function drawClusterLabels(svgId='viz',layerId='clusterLabels'){
  const svg=$(svgId);if(!svg)return;
- let layer=$(layerId);if(!layer){layer=el('g',{id:layerId});svg.append(layer)}layer.replaceChildren();
- if(mode!=='tsne'||!embedding||!clusters)return;
- for(let c=0;c<K;c++){
-   const col=c%2,row=Math.floor(c/2),x=22+col*410,y=14+row*42,w=396,h=34;
-   const color=clusterPalette[c%clusterPalette.length];
-   const hit=el('g',{'class':'cluster-label-hover'});
-   hit.style.cursor='help';
-   hit.append(el('rect',{x,y,width:w,height:h,rx:9,fill:'#ffffff',stroke:color,'stroke-width':1.6}));
-   hit.append(el('rect',{x:x+9,y:y+9,width:9,height:16,rx:3,fill:color}));
-   const name=clusterName(c),count=clusters.filter(v=>v===c).length;
-   const label=el('text',{x:x+27,y:y+22,'font-size':12,'font-weight':700,fill:'#244158'});
-   label.textContent='C'+(c+1)+' · '+name+' ('+count+' จังหวัด)';hit.append(label);
-   try{if(label.getComputedTextLength()>w-42){label.setAttribute('textLength',w-42);label.setAttribute('lengthAdjust','spacingAndGlyphs')}}catch(e){}
-   hit.addEventListener('mousemove',e=>{
-     if(brush.active)return;
-     const names=rows.filter((_,i)=>clusters[i]===c).map(d=>d.province_name_th).sort((a,b)=>a.localeCompare(b,'th'));
-     const tip=$('tip');tip.textContent='กลุ่ม '+(c+1)+' · '+name+'\n'+count+' จังหวัด\n\n'+names.join(' · ');
-     tip.style.display='block';tip.style.maxWidth='380px';
-     tip.style.left=Math.max(8,Math.min(e.clientX+14,innerWidth-395))+'px';
-     tip.style.top=Math.max(8,Math.min(e.clientY+12,innerHeight-tip.offsetHeight-12))+'px';
-   });
-   hit.addEventListener('mouseleave',()=>{$('tip').style.display='none'});
-   layer.append(hit);
- }
+ const layer=$(layerId);if(layer)layer.replaceChildren();
 }
-
 
 function fmtRaw(k,value){
  if(value===null||value===undefined||value==='')return 'ไม่มีข้อมูล';
@@ -782,20 +731,20 @@ function fmtRaw(k,value){
  return num.toLocaleString('th-TH',{maximumFractionDigits:3})+(unit?' '+unit:'');
 }
 function visibleRawKeys(){return selected.size?[...selected]:allKeys}
-function rawSummary(d,limit=6){return visibleRawKeys().slice(0,limit).map(k=>DATA.labels[k]+': '+fmtRaw(k,d.raw_values[k])).join('\n')}
+function rawSummary(d,limit=6){return visibleRawKeys().slice(0,limit).map(k=>(filterLabels[k]||DATA.labels[k])+': '+fmtRaw(k,d.raw_values[k])).join('\n')}
 function detailProvince(i){
  const d=rows[i],box=$('detail');box.classList.remove('hidden');box.replaceChildren();
  const heading=document.createElement('strong');heading.textContent=d.province_name_th+' · '+d.region_name_th;box.append(heading);
  const ballot=document.createElement('div');ballot.textContent='พรรคอันดับหนึ่ง ('+ballotLabel()+'): '+winningParty(d);box.append(ballot);
  if(mode==='tsne'&&clusters){const group=document.createElement('div');group.textContent='กลุ่ม '+(clusters[i]+1)+' · '+clusterName(clusters[i]);box.append(group)}
- const heading2=document.createElement('div');heading2.className='raw-header';heading2.textContent='ค่าตัวชี้วัดจริง (Raw Values)';box.append(heading2);
- const grid=document.createElement('div');grid.className='raw-grid';visibleRawKeys().forEach(k=>{let a=document.createElement('span'),b=document.createElement('span');a.textContent=DATA.labels[k];b.textContent=fmtRaw(k,d.raw_values[k]);grid.append(a,b)});box.append(grid);
+ const heading2=document.createElement('div');heading2.className='raw-header';heading2.textContent='ข้อมูลของจังหวัด';box.append(heading2);
+ const grid=document.createElement('div');grid.className='raw-grid';visibleRawKeys().forEach(k=>{let a=document.createElement('span'),b=document.createElement('span');a.textContent=filterLabels[k]||DATA.labels[k];b.textContent=fmtRaw(k,d.raw_values[k]);grid.append(a,b)});box.append(grid);
 }
 
-function profile(c){let ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c);if(!ids.length)return 'ไม่มีจังหวัด';let ranked=[...selected].map(key=>[key,ids.reduce((s,i)=>s+(+rows[i][key]||0),0)/ids.length]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,2);return ranked.map(([k,v])=>{const vals=ids.map(i=>rows[i].raw_values[k]).filter(x=>x!==null&&x!==undefined&&Number.isFinite(+x));const avg=vals.length?vals.reduce((a,b)=>a+(+b),0)/vals.length:null;return DATA.labels[k]+' '+(v>=0?'สูง':'ต่ำ')+' (เฉลี่ย '+fmtRaw(k,avg)+')'}).join(' · ')}
+function profile(c){let ids=rows.map((_,i)=>i).filter(i=>clusters[i]===c);if(!ids.length)return 'ไม่มีจังหวัด';let ranked=[...selected].map(key=>[key,ids.reduce((s,i)=>s+(+rows[i][key]||0),0)/ids.length]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,2);return ranked.map(([k,v])=>{const vals=ids.map(i=>rows[i].raw_values[k]).filter(x=>x!==null&&x!==undefined&&Number.isFinite(+x));const avg=vals.length?vals.reduce((a,b)=>a+(+b),0)/vals.length:null;return (filterLabels[k]||DATA.labels[k])+' '+(v>=0?'อยู่ในระดับสูง':'อยู่ในระดับต่ำ')+' (เฉลี่ย '+fmtRaw(k,avg)+')'}).join(' · ')}
 function metrics(){let n=rows.length,counts=Array.from({length:K},()=>new Map()),size=new Array(K).fill(0),purity=0,hom=0,partyTotals=new Map();rows.forEach((d,i)=>{let c=clusters[i],p=winningParty(d);size[c]++;counts[c].set(p,(counts[c].get(p)||0)+1);partyTotals.set(p,(partyTotals.get(p)||0)+1)});let overallEntropy=0;partyTotals.forEach(v=>{let q=v/n;overallEntropy-=q*Math.log(q)});let weightedEntropy=0;counts.forEach((map,c)=>{let max=Math.max(0,...map.values());purity+=max;let h=0;map.forEach(v=>{let q=v/(size[c]||1);h-=q*Math.log(q)});weightedEntropy+=h*size[c]/n});hom=overallEntropy?1-weightedEntropy/overallEntropy:1;return {purity:purity/n,hom,counts,size}}
 function drawAnalysis(){if(scene===0||(scene===5&&!selected.size)){$('metrics').innerHTML='<div class="metric"><b>77</b><small>จังหวัด</small></div><div class="metric"><b>'+parties.length+'</b><small>พรรคอันดับหนึ่ง</small></div>'; $('clusters').replaceChildren();if(chosen!==null)detailProvince(chosen);else $('detail').classList.add('hidden');return}const m=metrics();$('metrics').innerHTML='<div class="metric"><b>77</b><small>จังหวัดทั้งหมด</small></div><div class="metric"><b>'+Math.round(m.purity*100)+'%</b><small>Weighted purity</small></div><div class="metric"><b>'+m.hom.toFixed(3)+'</b><small>Homogeneity</small></div>';
-let host=$('clusters');host.replaceChildren();for(let c=0;c<K;c++){let card=document.createElement('div');card.className='cluster';let title=document.createElement('strong');title.textContent='กลุ่ม '+(c+1)+' · '+clusterName(c);card.append(title);
+let host=$('clusters');host.replaceChildren();for(let c=0;c<K;c++){let card=document.createElement('div');card.className='cluster';let title=document.createElement('strong');title.className='cluster-name-title';title.textContent='กลุ่ม '+(c+1)+' · '+clusterName(c);card.append(title);
  const provinceNames=rows.filter((_,i)=>clusters[i]===c).map(d=>d.province_name_th).sort((a,b)=>a.localeCompare(b,'th'));
  const countLine=document.createElement('div');countLine.className='cluster-province-count';countLine.textContent=m.size[c]+' จังหวัด';
  countLine.tabIndex=0;countLine.setAttribute('aria-label',m.size[c]+' จังหวัด: '+provinceNames.join(', '));
@@ -852,8 +801,8 @@ function renderScene1Summary(){
  const foot=document.createElement('div');foot.className='summary-total';foot.textContent='รวม '+rows.length+' จังหวัด · ข้อมูลนี้ระบุพรรคอันดับหนึ่งรายจังหวัด ไม่ได้มีคะแนนเสียงรวมของแต่ละพรรค';host.append(foot);
 }
 
-function draw(){$('tip').style.display='none';drawMap();drawAnalysis();renderScene1Summary()}
-const filterLabels={"voters_not_came_rate_zscore":"สัดส่วนผู้ไม่มาใช้สิทธิ","invalid_party_list_rate_zscore":"สัดส่วนบัตรเสียบัญชีรายชื่อ","invalid_constituency_rate_zscore":"สัดส่วนบัตรเสียแบ่งเขต","households_without_internet_rate_zscore":"สัดส่วนครัวเรือนที่ไม่มีอินเทอร์เน็ต","median_equivalised_monthly_household_income_zscore":"รายได้ครัวเรือนมัธยฐานต่อเดือน","poverty_headcount_ratio_zscore":"สัดส่วนประชากรยากจน","equivalised_income_gini_zscore":"ดัชนีความเหลื่อมล้ำด้านรายได้ (Gini)","household_debt_to_monthly_income_ratio_zscore":"อัตราส่วนหนี้สินครัวเรือนต่อรายได้","employment_yoy_change_rate_zscore":"อัตราการเปลี่ยนแปลงการจ้างงาน","agriculture_gpp_share_zscore":"สัดส่วนผลิตภัณฑ์จังหวัดภาคเกษตร","manufacturing_gpp_share_zscore":"สัดส่วนผลิตภัณฑ์จังหวัดภาคอุตสาหกรรม","urban_population_z_score":"สัดส่วนประชากรในเขตเมือง","population_age_60_plus_z_score":"สัดส่วนประชากรอายุ 60 ปีขึ้นไป","population_change_z_score":"อัตราการเปลี่ยนแปลงประชากร","skip_generation_households_z_score":"สัดส่วนครัวเรือนข้ามรุ่น","higher_edu_zscore":"สัดส่วนผู้มีการศึกษาระดับอุดมศึกษา","poverty_zscore":"สัดส่วนความยากจนด้านการศึกษา","nfe_zscore":"สัดส่วนผู้เรียนการศึกษานอกระบบ","no_higher_edu_zscore":"สัดส่วนผู้ไม่มีการศึกษาระดับอุดมศึกษา"};
+function draw(){$('tip').style.display='none';drawMap();renderStandardClusterLabels();if(scene===5)alignScene6ChartTops();drawAnalysis();renderScene1Summary()}
+const filterLabels={"voters_not_came_rate_zscore":"สัดส่วนผู้ไม่มาใช้สิทธิเลือกตั้ง","invalid_party_list_rate_zscore":"สัดส่วนบัตรเสียในการเลือกพรรค","invalid_constituency_rate_zscore":"สัดส่วนบัตรเสียในการเลือกผู้สมัคร","households_without_internet_rate_zscore":"สัดส่วนครัวเรือนที่ไม่มีอินเทอร์เน็ต","median_equivalised_monthly_household_income_zscore":"รายได้ครัวเรือนต่อเดือน","poverty_headcount_ratio_zscore":"สัดส่วนประชากรที่มีรายได้น้อย","equivalised_income_gini_zscore":"ระดับความแตกต่างของรายได้","household_debt_to_monthly_income_ratio_zscore":"ภาระหนี้ครัวเรือนเทียบกับรายได้","employment_yoy_change_rate_zscore":"การเปลี่ยนแปลงของการจ้างงาน","agriculture_gpp_share_zscore":"สัดส่วนเศรษฐกิจจากภาคเกษตร","manufacturing_gpp_share_zscore":"สัดส่วนเศรษฐกิจจากภาคอุตสาหกรรม","urban_population_z_score":"สัดส่วนประชากรในเขตเมือง","population_age_60_plus_z_score":"สัดส่วนประชากรอายุ 60 ปีขึ้นไป","population_change_z_score":"การเปลี่ยนแปลงจำนวนประชากร","skip_generation_households_z_score":"สัดส่วนครัวเรือนที่ผู้สูงอายุอาศัยกับหลาน","higher_edu_zscore":"สัดส่วนผู้ได้รับการศึกษาระดับอุดมศึกษา","poverty_zscore":"สัดส่วนผู้มีข้อจำกัดด้านการศึกษา","nfe_zscore":"สัดส่วนผู้เรียนการศึกษานอกระบบ","no_higher_edu_zscore":"สัดส่วนผู้ไม่ได้ศึกษาต่อระดับอุดมศึกษา"};
 function factorsUI(){let host=$('factors');host.replaceChildren();factorGroups.forEach(([group,title])=>{let column=document.createElement('div');column.className='factor-category';let h=document.createElement('div');h.className='groupname';h.textContent=title;column.append(h);DATA.groups[group].forEach(key=>{let label=document.createElement('label');label.className='factor';let box=document.createElement('input');box.type='checkbox';box.checked=selected.has(key);box.onchange=()=>{box.checked?selected.add(key):selected.delete(key);if(selected.size)$('clusterAccordion').open=true;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัดที่เลือก · แสดง Tile Grid Map อัตโนมัติ';draw()}else calculate()};label.append(box,document.createTextNode(filterLabels[key]||DATA.labels[key]));column.append(label)});host.append(column)})}
 function chooseKeys(){let key=scenes[scene][3];selected=new Set(key==='all'?allKeys:DATA.groups[key]);factorsUI()}
 function go(i){
@@ -943,7 +892,7 @@ svgTsne.addEventListener('mousemove',e=>{
  hoveredClusters.clear();
  if(scene===5&&mode==='tsne'&&embedding&&clusters&&!e.target.closest('.cluster-label-hover')){
   for(const h of tsneHulls){
-   if(pointInClusterRings(p.x,p.y,h.rings))hoveredClusters.add(h.c);
+   if(pointInPolygon(p.x,p.y,h.poly))hoveredClusters.add(h.c);
   }
  }
  updateGeoOpacity();
@@ -951,6 +900,20 @@ svgTsne.addEventListener('mousemove',e=>{
 svgTsne.addEventListener('mouseup',()=>clearBrush());
 svgTsne.addEventListener('mouseleave',()=>{hoveredClusters.clear();clearBrush()});
 window.addEventListener('mouseup',()=>clearBrush());
-document.querySelectorAll('input[name="ballotType"]').forEach(el=>el.onchange=()=>draw());$('clusterK').oninput=()=>{$('clusterKValue').textContent=$('clusterK').value+' กลุ่ม'};$('clusterK').onchange=()=>{if(scene===5&&selected.size)calculate()};$('allFactors').onclick=()=>{selected=new Set(allKeys);$('clusterAccordion').open=true;factorsUI();calculate()};$('viewSummary').onclick=()=>{$('clusterAccordion').open=true;requestAnimationFrame(()=>{$('summarySection').scrollIntoView({behavior:'smooth',block:'start'});});};$('clearFactors').onclick=()=>{selected.clear();embedding=null;mode='geo';factorsUI();$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map อัตโนมัติ';draw()};$('back').onclick=()=>go(scene-1);$('next').onclick=()=>{if(scene<5){highestUnlockedScene=Math.max(highestUnlockedScene,scene+1);go(scene+1)}};clusters=kmeans(standardMatrix(allKeys),K,seed);go(0)}
+document.querySelectorAll('input[name="ballotType"]').forEach(el=>el.onchange=()=>draw());$('clusterK').oninput=()=>{$('clusterKValue').textContent=$('clusterK').value+' กลุ่ม'};$('clusterK').onchange=()=>{if(scene===5&&selected.size)calculate()};$('allFactors').onclick=()=>{selected=new Set(allKeys);$('clusterAccordion').open=true;factorsUI();calculate()};$('viewSummary').onclick=()=>{$('clusterAccordion').open=true;requestAnimationFrame(()=>{const side=document.querySelector('.side');const target=$('summarySection');if(scene===5&&window.innerWidth>1050){side.scrollTo({top:side.scrollTop+target.getBoundingClientRect().top-side.getBoundingClientRect().top-16,behavior:'smooth'});}else{target.scrollIntoView({behavior:'smooth',block:'start'});}});};$('clearFactors').onclick=()=>{selected.clear();embedding=null;mode='geo';factorsUI();$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map อัตโนมัติ';draw()};$('back').onclick=()=>go(scene-1);$('next').onclick=()=>{if(scene<5){highestUnlockedScene=Math.max(highestUnlockedScene,scene+1);go(scene+1)}};clusters=kmeans(standardMatrix(allKeys),K,seed);go(0)}
+
+// Keep the Scene 6 right-hand card exactly as tall as the left-hand chart card.
+function syncScene6PanelHeight(){
+ const main=document.querySelector('.layout>.main');
+ const side=document.querySelector('.layout>.side');
+ if(!main||!side)return;
+ if(scene!==5){side.style.removeProperty('--scene6-panel-height');return;}
+ const h=Math.ceil(main.getBoundingClientRect().height);
+ if(h>0)side.style.setProperty('--scene6-panel-height',h+'px');
+}
+const scene6PanelObserver=new ResizeObserver(()=>syncScene6PanelHeight());
+scene6PanelObserver.observe(document.querySelector('.layout>.main'));
+window.addEventListener('resize',syncScene6PanelHeight);
+
 initialize();
 </script></body></html>
