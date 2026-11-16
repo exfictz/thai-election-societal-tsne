@@ -435,7 +435,78 @@ function fit(coords,mode){let xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]),minX
 // Display-only collision avoidance: preserve t-SNE and K-means calculations.
 // Place all circle centres at least 24px apart; leave the top label band clear.
 function separateOverlappingDots(input){
- return input.map(p=>[p[0],p[1]]);
+ const pts=input.map(p=>[p[0],p[1]]);
+ if(!clusters||!K||K<=1)return pts;
+ const n=pts.length,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ for(let pass=0;pass<4;pass++){
+  const {allAddedSegs,ownIdxByCluster,find}=buildClusterSkeletons(pts,clusters,K);
+  let anyDisconnected=false;
+  for(let c=0;c<K;c++){
+   const ownGlobalIds=ownIdxByCluster[c];
+   if(ownGlobalIds.length<=1)continue;
+   const compMap=new Map();
+   for(let li=0;li<ownGlobalIds.length;li++){
+    const r=find(c,li);
+    if(!compMap.has(r))compMap.set(r,[]);
+    compMap.get(r).push(ownGlobalIds[li]);
+   }
+   if(compMap.size<=1)continue;
+   anyDisconnected=true;
+   const comps=[...compMap.values()].sort((a,b)=>{
+    if(b.length!==a.length)return b.length-a.length;
+    const spread=arr=>{let s=0;for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)s+=Math.hypot(pts[arr[i]][0]-pts[arr[j]][0],pts[arr[i]][1]-pts[arr[j]][1]);return s};
+    return spread(a)-spread(b);
+   });
+   const mainIds=[...comps[0]],strandedIds=[];
+   for(let ci=1;ci<comps.length;ci++)for(const id of comps[ci])strandedIds.push(id);
+   strandedIds.sort((a,b)=>{
+    const da=Math.min(...mainIds.map(m=>Math.hypot(pts[a][0]-pts[m][0],pts[a][1]-pts[m][1])));
+    const db=Math.min(...mainIds.map(m=>Math.hypot(pts[b][0]-pts[m][0],pts[b][1]-pts[m][1])));
+    return da-db;
+   });
+   for(const id of strandedIds){
+    const ox=pts[id][0],oy=pts[id][1];
+    const anchors=[...mainIds].sort((a,b)=>Math.hypot(pts[a][0]-ox,pts[a][1]-oy)-Math.hypot(pts[b][0]-ox,pts[b][1]-oy));
+    let placed=false;
+    for(const [minF,minOwn,minSeg] of [[24,18,16],[20,15,14],[16,12,12]]){
+     if(placed)break;
+     let bestCand=null,bestScore=Infinity;
+     for(const anchor of anchors){
+      const ax=pts[anchor][0],ay=pts[anchor][1],baseAng=Math.atan2(oy-ay,ox-ax);
+      for(const r of [24,30,36,42,50,58,68,80]){
+       for(let stepA=0;stepA<36;stepA++){
+        const delta=(stepA===0?0:(stepA%2===1?1:-1)*Math.ceil(stepA/2))*(Math.PI/18);
+        const ang=baseAng+delta,nx=clamp(ax+Math.cos(ang)*r,30,820),ny=clamp(ay+Math.sin(ang)*r,90,732);
+        let ok=true;
+        for(let k=0;k<n;k++){
+         if(k===id||(strandedIds.includes(k)&&!mainIds.includes(k)))continue;
+         const d=Math.hypot(nx-pts[k][0],ny-pts[k][1]);
+         if(clusters[k]!==c){if(d<minF||distToSeg(pts[k][0],pts[k][1],ax,ay,nx,ny)<minSeg){ok=false;break}}
+         else if(d<minOwn){ok=false;break}
+        }
+        if(!ok)continue;
+        for(const s of allAddedSegs){
+         if(s.c===c)continue;
+         if(segsIntersect(ax,ay,nx,ny,s.ax,s.ay,s.bx,s.by)||distToSeg(nx,ny,s.ax,s.ay,s.bx,s.by)<minSeg||distToSeg(s.ax,s.ay,ax,ay,nx,ny)<minSeg||distToSeg(s.bx,s.by,ax,ay,nx,ny)<minSeg||distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by)<minSeg){ok=false;break}
+        }
+        if(!ok)continue;
+        const score=Math.hypot(nx-ox,ny-oy)+Math.abs(delta)*12+r*0.3;
+        if(score<bestScore){bestScore=score;bestCand={nx,ny,ax,ay}}
+       }
+      }
+     }
+     if(bestCand){
+      pts[id][0]=bestCand.nx;pts[id][1]=bestCand.ny;
+      mainIds.push(id);
+      allAddedSegs.push({c,ax:bestCand.ax,ay:bestCand.ay,bx:bestCand.nx,by:bestCand.ny});
+      placed=true;
+     }
+    }
+   }
+  }
+  if(!anyDisconnected)break;
+ }
+ return pts;
  // # const original=input.map(p=>[p[0],p[1]]),points=input.map(p=>[p[0],p[1]]);
  // # const minGap=24,margin=27,left=margin,right=850-margin,top=207,bottom=760-margin;
  // # const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -771,76 +842,81 @@ function hull(points){
  for(let i=a.length-1;i>=0;i--){const p=a[i];while(up.length>1&&cross(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}
  lo.pop();up.pop();return lo.concat(up);
 }
-function extractClusterPolygons(coords,clusters,K){
- const allAddedSegs=[];
- const clusterOrder=Array.from({length:K},(_,c)=>c).sort((a,b)=>{
-  const ca=coords.filter((_,i)=>clusters[i]===a).length;
-  const cb=coords.filter((_,i)=>clusters[i]===b).length;
-  return ca-cb;
- });
- const skeletons=Array.from({length:K},()=>[]);
- for(const c of clusterOrder){
-  const own=coords.filter((_,i)=>clusters[i]===c);
-  const foreign=coords.filter((_,i)=>clusters[i]!==c);
-  const segs=own.map(([x,y])=>({ax:x,ay:y,bx:x,by:y,minX:x,maxX:x,minY:y,maxY:y}));
-  skeletons[c]=segs;
-  if(own.length<=1)continue;
-  const edges=[];
-  for(let i=0;i<own.length;i++)for(let j=i+1;j<own.length;j++)edges.push({i,j,d:Math.hypot(own[i][0]-own[j][0],own[i][1]-own[j][1])});
-  edges.sort((a,b)=>a.d-b.d);
-  const segClearance=(ax,ay,bx,by)=>{
-   let m=Infinity;
-   for(const [fx,fy] of foreign)m=Math.min(m,distToSeg(fx,fy,ax,ay,bx,by));
-   for(const s of allAddedSegs){
-    if(s.c===c)continue;
-    if(segsIntersect(ax,ay,bx,by,s.ax,s.ay,s.bx,s.by))return 0;
-    m=Math.min(m,distToSeg(s.ax,s.ay,ax,ay,bx,by),distToSeg(s.bx,s.by,ax,ay,bx,by),distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by),distToSeg(bx,by,s.ax,s.ay,s.bx,s.by));
-   }
-   return m;
-  };
-  const parent=own.map((_,i)=>i),find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
-  const union=(i,j)=>{const ri=find(i),rj=find(j);if(ri!==rj){parent[ri]=rj;return true}return false};
-  const seenSeg=new Set();
-  const addSeg=(ax,ay,bx,by)=>{
-   const k1=Math.round(ax)+","+Math.round(ay)+"-"+Math.round(bx)+","+Math.round(by);
-   const k2=Math.round(bx)+","+Math.round(by)+"-"+Math.round(ax)+","+Math.round(ay);
-   if(seenSeg.has(k1)||seenSeg.has(k2))return;
-   seenSeg.add(k1);
-   segs.push({ax,ay,bx,by,minX:Math.min(ax,bx),maxX:Math.max(ax,bx),minY:Math.min(ay,by),maxY:Math.max(ay,by)});
-   allAddedSegs.push({c,ax,ay,bx,by});
-  };
-  for(const e of edges){
-   if(find(e.i)===find(e.j))continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j],clear=segClearance(ax,ay,bx,by);
-   if(clear>=15&&e.d<280){addSeg(ax,ay,bx,by);union(e.i,e.j)}
-  }
-  const deg=new Int32Array(own.length);
-  for(const e of edges){
-   if(e.d>160||deg[e.i]>=4||deg[e.j]>=4)continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
-   if(segClearance(ax,ay,bx,by)<16)continue;
-   const mx=(ax+bx)/2,my=(ay+by)/2,rad=e.d/2;
-   if(foreign.some(([fx,fy])=>Math.hypot(fx-mx,fy-my)<rad*0.85))continue;
-   addSeg(ax,ay,bx,by);union(e.i,e.j);deg[e.i]++;deg[e.j]++;
-  }
-  for(const e of edges){
-   if(find(e.i)===find(e.j)||e.d>450)continue;
-   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
-   if(segClearance(ax,ay,bx,by)>=13.5){addSeg(ax,ay,bx,by);union(e.i,e.j);continue}
-   const mx=(ax+bx)/2,my=(ay+by)/2,ux=-(by-ay)/e.d,uy=(bx-ax)/e.d;
-   let bestPts=null,bestClear=13;
-   for(const off of [24,-24,42,-42,62,-62,84,-84,108,-108,136,-136,168,-168]){
-    const cx=mx+ux*off,cy=my+uy*off;
-    if(cx<18||cx>832||cy<80||cy>742)continue;
-    const ptsB=[];
-    for(let t=0;t<=6;t++){const s=t/6,u=1-s;ptsB.push([u*u*ax+2*u*s*cx+s*s*bx,u*u*ay+2*u*s*cy+s*s*by])}
-    let cMin=Infinity;
-    for(let s=0;s<6;s++)cMin=Math.min(cMin,segClearance(ptsB[s][0],ptsB[s][1],ptsB[s+1][0],ptsB[s+1][1]));
-    if(cMin>bestClear){bestClear=cMin;bestPts=ptsB;break}
-   }
-   if(bestPts){for(let s=0;s<bestPts.length-1;s++)addSeg(bestPts[s][0],bestPts[s][1],bestPts[s+1][0],bestPts[s+1][1]);union(e.i,e.j)}
-  }
+function buildClusterSkeletons(coords,clusters,K){
+ const allAddedSegs=[],skeletons=Array.from({length:K},()=>[]);
+ const ownIdxByCluster=Array.from({length:K},()=>[]),ownByCluster=Array.from({length:K},()=>[]),foreignByCluster=Array.from({length:K},()=>[]);
+ for(let i=0;i<coords.length;i++){
+  const c=clusters[i];
+  if(c>=0&&c<K){ownIdxByCluster[c].push(i);ownByCluster[c].push(coords[i])}
+  for(let c2=0;c2<K;c2++)if(c2!==c)foreignByCluster[c2].push(coords[i]);
  }
+ const parentByCluster=Array.from({length:K},(_,c)=>ownByCluster[c].map((_,i)=>i));
+ const find=(c,i)=>{const p=parentByCluster[c];return p[i]===i?i:(p[i]=find(c,p[i]))};
+ const union=(c,i,j)=>{const ri=find(c,i),rj=find(c,j);if(ri!==rj){parentByCluster[c][ri]=rj;return true}return false};
+ const seenSeg=Array.from({length:K},()=>new Set());
+ const addSeg=(c,ax,ay,bx,by)=>{
+  const k1=Math.round(ax)+","+Math.round(ay)+"-"+Math.round(bx)+","+Math.round(by);
+  const k2=Math.round(bx)+","+Math.round(by)+"-"+Math.round(ax)+","+Math.round(ay);
+  if(seenSeg[c].has(k1)||seenSeg[c].has(k2))return;
+  seenSeg[c].add(k1);
+  skeletons[c].push({ax,ay,bx,by,minX:Math.min(ax,bx),maxX:Math.max(ax,bx),minY:Math.min(ay,by),maxY:Math.max(ay,by)});
+  allAddedSegs.push({c,ax,ay,bx,by});
+ };
+ const segClearance=(c,ax,ay,bx,by)=>{
+  let m=Infinity;
+  for(const [fx,fy] of foreignByCluster[c])m=Math.min(m,distToSeg(fx,fy,ax,ay,bx,by));
+  for(const s of allAddedSegs){
+   if(s.c===c)continue;
+   if(segsIntersect(ax,ay,bx,by,s.ax,s.ay,s.bx,s.by))return 0;
+   m=Math.min(m,distToSeg(s.ax,s.ay,ax,ay,bx,by),distToSeg(s.bx,s.by,ax,ay,bx,by),distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by),distToSeg(bx,by,s.ax,s.ay,s.bx,s.by));
+  }
+  return m;
+ };
+ const globalEdges=[];
+ for(let c=0;c<K;c++){
+  const own=ownByCluster[c];
+  for(const [x,y] of own)skeletons[c].push({ax:x,ay:y,bx:x,by:y,minX:x,maxX:x,minY:y,maxY:y});
+  for(let i=0;i<own.length;i++)for(let j=i+1;j<own.length;j++)globalEdges.push({c,i,j,d:Math.hypot(own[i][0]-own[j][0],own[i][1]-own[j][1])});
+ }
+ globalEdges.sort((a,b)=>a.d-b.d);
+ for(const e of globalEdges){
+  if(e.d>=260||find(e.c,e.i)===find(e.c,e.j))continue;
+  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
+  if(segClearance(e.c,ax,ay,bx,by)>=15){addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j)}
+ }
+ for(const e of globalEdges){
+  if(e.d>480||find(e.c,e.i)===find(e.c,e.j))continue;
+  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
+  if(segClearance(e.c,ax,ay,bx,by)>=14){addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j);continue}
+  if(e.d<1e-6)continue;
+  const mx=(ax+bx)/2,my=(ay+by)/2,ux=-(by-ay)/e.d,uy=(bx-ax)/e.d;
+  let bestPts=null,bestClear=13.5;
+  for(const off of [24,-24,42,-42,62,-62,84,-84,108,-108,136,-136,168,-168,205,-205]){
+   const cx=mx+ux*off,cy=my+uy*off;
+   if(cx<18||cx>832||cy<76||cy>742)continue;
+   const ptsB=[];
+   for(let t=0;t<=8;t++){const s=t/8,u=1-s;ptsB.push([u*u*ax+2*u*s*cx+s*s*bx,u*u*ay+2*u*s*cy+s*s*by])}
+   let cMin=Infinity;
+   for(let s=0;s<8;s++)cMin=Math.min(cMin,segClearance(e.c,ptsB[s][0],ptsB[s][1],ptsB[s+1][0],ptsB[s+1][1]));
+   if(cMin>bestClear){bestClear=cMin;bestPts=ptsB;break}
+  }
+  if(bestPts){for(let s=0;s<bestPts.length-1;s++)addSeg(e.c,bestPts[s][0],bestPts[s][1],bestPts[s+1][0],bestPts[s+1][1]);union(e.c,e.i,e.j)}
+ }
+ const degByCluster=Array.from({length:K},(_,c)=>new Int32Array(ownByCluster[c].length));
+ for(const e of globalEdges){
+  if(e.d>160)continue;
+  const deg=degByCluster[e.c];
+  if(deg[e.i]>=4||deg[e.j]>=4)continue;
+  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
+  if(segClearance(e.c,ax,ay,bx,by)<16)continue;
+  const mx=(ax+bx)/2,my=(ay+by)/2,rad=e.d/2;
+  if(foreignByCluster[e.c].some(([fx,fy])=>Math.hypot(fx-mx,fy-my)<rad*0.85))continue;
+  addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j);deg[e.i]++;deg[e.j]++;
+ }
+ return {skeletons,allAddedSegs,ownIdxByCluster,find};
+}
+function extractClusterPolygons(coords,clusters,K){
+ const {skeletons}=buildClusterSkeletons(coords,clusters,K);
  const step=6,cols=Math.ceil(850/step)+1,rowsG=Math.ceil(760/step)+1;
  const distGrid=Array.from({length:K},()=>new Float32Array(cols*rowsG));
  for(let c=0;c<K;c++){
@@ -1114,7 +1190,7 @@ function go(i){
  selected=new Set(DATA.groups[scenes[scene][3]]);mode='tsne';calculate();
 }
 function csvExport(){let head=['province_code','province_name_th','nesdc_region_name_th','party_name_th','cluster','tsne_x','tsne_y',...selected],line=[head.join(',')];rows.forEach((d,i)=>{let fields=[d.province_code,d.province_name_th,d.nesdc_region_name_th,d.party_name_th,(clusters?.[i]??0)+1,embedding?.[i]?.[0]??'',embedding?.[i]?.[1]??'',...[...selected].map(k=>d[k])];line.push(fields.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))});let blob=new Blob(['\ufeff'+line.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='election_2569_tsne_clusters.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix([...selected]);perplexity=25;seed=FIXED_SEED;const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}else{K=Number(choice);clusters=kmeans(X,K,seed)};embedding=tsne(X,perplexity,seed);mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 1000 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
+async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix(allKeys.filter(k=>selected.has(k)));perplexity=25;seed=FIXED_SEED;const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}else{K=Number(choice);clusters=kmeans(X,K,seed)};embedding=tsne(X,perplexity,seed);mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 1000 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
 function positionChartTooltip(t,e){
   // Compact, left-opening tooltip, matching the first scene's hover cards.
   const margin=12, gap=12;
