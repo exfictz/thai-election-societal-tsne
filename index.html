@@ -359,6 +359,149 @@ header{position:relative!important}
 .header-creators .creators-heading{font-size:10px;font-weight:700;color:#42637f;margin-bottom:3px}
 .header-creators div{text-align:left!important;margin:0!important}
 @media(max-width:850px){.header-creators{position:static;max-width:none;margin-bottom:16px!important}header>div:not(.header-creators){margin-left:0!important}}
+
+/* Responsive layout for phones and tablets */
+html,body{max-width:100%;overflow-x:hidden}
+.layout,.main,.side,.scene6-layout,.dual-viz,.dual-pane{min-width:0}
+svg{max-width:100%;touch-action:pan-y}
+@media(max-width:1050px){
+ .layout{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important}
+ .layout>.main,.layout>.side{width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
+ .side.scene6-side{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
+ .dual-viz{grid-template-columns:minmax(0,1fr)!important}
+ .dual-pane svg{height:auto!important;min-height:0!important;aspect-ratio:850/760}
+}
+@media(max-width:700px){
+ header{position:relative!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;padding:18px 14px 16px!important;text-align:left!important;gap:14px}
+ header>div:not(.header-creators),header .eyebrow,header h1,header .hero-subtitle{text-align:left!important;margin-left:0!important;margin-right:0!important}
+ .header-creators{position:static!important;order:2;max-width:100%!important;width:100%;margin:0!important;padding-top:10px;border-top:1px solid #e0e8ed;font-size:10px!important;line-height:1.65}
+ header>div:not(.header-creators){order:1}
+ header h1{font-size:clamp(23px,6vw,31px)!important;line-height:1.3}
+ .hero-subtitle{font-size:12px!important;line-height:1.7}
+ .shell{width:100%!important;max-width:100%!important;padding:0 10px 24px!important}
+ .top-navigation{display:grid!important;grid-template-columns:36px minmax(0,1fr) 36px;align-items:center;gap:5px!important;margin-bottom:12px}
+ .top-navigation .nav-top{width:36px!important;min-width:0!important;align-self:center!important}
+ .top-navigation .nav-top button{width:36px!important;min-width:36px!important;min-height:42px;padding:5px!important}
+ .top-navigation .progress{display:flex!important;min-width:0!important;width:100%;overflow-x:auto!important;overscroll-behavior-x:contain;scroll-snap-type:x proximity;gap:6px!important;scrollbar-width:thin}
+ .top-navigation .step{flex:0 0 122px!important;min-width:122px!important;scroll-snap-align:start;padding:9px 8px!important;font-size:11px!important}
+ .layout{gap:12px!important}
+ .main,.side{padding:13px!important;border-radius:12px!important}
+ .maphead{display:flex;flex-wrap:wrap;gap:9px}
+ .maphead h2{font-size:17px!important;line-height:1.45}
+ .side h2{font-size:20px!important}
+ #viz{display:block;width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:850/760}
+ .dual-viz{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:18px!important}
+ .dual-pane{min-width:0!important;width:100%}
+ .dual-pane svg{width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:850/760}
+ .dual-pane-head h3{font-size:14px!important}
+ .dual-pane-head .eyebrow{font-size:11px!important}
+ .standard-cluster-labels,.scene6-layout>.scene6-cluster-labels{grid-template-columns:minmax(0,1fr)!important;gap:6px!important}
+ .scene6-cluster-label{min-width:0;overflow-wrap:anywhere}
+ .scene6-cluster-name{font-size:11px!important}
+ .legend{max-width:100%;flex-wrap:wrap}
+ .cluster-province-popover{max-width:calc(100vw - 32px)!important}
+ .cluster-slider-full{flex-wrap:wrap}
+ button,input,select{max-width:100%}
+}
+@media(max-width:390px){
+ .shell{padding-left:7px!important;padding-right:7px!important}
+ .main,.side{padding:10px!important}
+ .top-navigation .step{flex-basis:108px!important;min-width:108px!important}
+ header{padding-left:11px!important;padding-right:11px!important}
+}
+
+/* Mobile v2: fix real device layout and touch targets without affecting desktop. */
+@media (max-width: 1050px){
+ .layout{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px!important}
+ .layout>.main,.layout>.side{min-width:0!important;width:100%!important;max-width:100%!important;min-height:0!important;max-height:none!important;height:auto!important;overflow:visible!important}
+ .side{display:flex;flex-direction:column}
+ .dual-viz{grid-template-columns:minmax(0,1fr)!important}
+ .dual-pane{min-width:0!important}
+ .dual-pane svg{width:100%!important;min-height:0!important;height:auto!important;aspect-ratio:850/760}
+}
+@media (max-width: 700px){
+ :root{font-size:14px;-webkit-text-size-adjust:100%}
+ body{width:100%;overflow-x:clip}
+ header{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:12px!important;padding:16px 14px!important;text-align:left!important}
+ header>div:not(.header-creators){order:0;text-align:left!important;margin:0!important}
+ header .eyebrow,header h1,header .hero-subtitle{text-align:left!important;margin-left:0!important;margin-right:0!important}
+ header h1{font-size:clamp(23px,6vw,31px)!important;line-height:1.25}
+ header .hero-subtitle{font-size:12px!important;line-height:1.6}
+ .header-creators{position:static!important;order:1!important;width:100%!important;max-width:100%!important;margin:0!important;padding-top:10px!important;border-top:1px solid #dce6ed;text-align:left!important;font-size:10px!important}
+ .shell{width:100%!important;max-width:100%!important;padding:0 10px 24px!important}
+ .top-navigation{display:grid!important;grid-template-columns:40px minmax(0,1fr) 40px!important;gap:6px!important;align-items:center!important;margin-bottom:12px!important}
+ .top-navigation>.nav-top{display:block!important;width:40px!important;min-width:0!important;padding:0!important;margin:0!important}
+ .top-navigation>.nav-top button{display:block!important;min-width:0!important;width:40px!important;height:44px!important;padding:0!important;font-size:20px!important}
+ .top-navigation>.progress{display:flex!important;grid-template-columns:none!important;gap:6px!important;min-width:0!important;width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding:2px 0!important}
+ .top-navigation>.progress::-webkit-scrollbar{display:none}
+ .top-navigation .step{flex:0 0 132px!important;min-width:132px!important;max-width:132px!important;min-height:44px!important;padding:8px!important;line-height:1.35!important;white-space:normal!important;scroll-snap-align:center;font-size:11px!important}
+ .layout{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ .main,.side{min-width:0!important;padding:13px!important;border-radius:12px!important}
+ .maphead{align-items:flex-start!important;gap:8px!important}
+ .maphead h2{font-size:17px!important;line-height:1.4}
+ #viz,#vizGeo,#vizTsne{display:block!important;width:100%!important;max-width:100%!important;min-height:0!important;height:auto!important;aspect-ratio:850/760}
+ .dual-viz{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:18px!important}
+ .dual-pane-head h3{font-size:15px!important}
+ .dual-pane-head .eyebrow{font-size:11px!important;line-height:1.5}
+ .standard-cluster-labels,.scene6-layout>.scene6-cluster-labels{grid-template-columns:minmax(0,1fr)!important;gap:7px!important}
+ .scene6-cluster-label{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere}
+ .scene6-cluster-name{font-size:12px!important}
+ .cluster-slider-full{flex-wrap:wrap!important;gap:8px!important}
+ .legend{max-width:100%;flex-wrap:wrap!important}
+ .cluster-province-popover{max-width:min(320px,calc(100vw - 36px))!important}
+ button,select,input[type=checkbox],input[type=radio]{touch-action:manipulation}
+ .side input:not([type=checkbox]):not([type=radio]),.side select{max-width:100%;min-width:0}
+ #tip{max-width:calc(100vw - 20px)!important;overflow-wrap:anywhere}
+}
+@media(max-width:380px){
+ .shell{padding-left:7px!important;padding-right:7px!important}
+ .main,.side{padding:10px!important}
+ .top-navigation .step{flex-basis:114px!important;min-width:114px!important;max-width:114px!important}
+}
+@media(hover:none) and (pointer:coarse){
+ .cluster-province-count{cursor:pointer}
+ #vizTsne{touch-action:pan-y}
+ .step,button,.scene6-cluster-label{ -webkit-tap-highlight-color:transparent }
+}
+
+/* Mobile browser compatibility patch — presentation only; all JS/data unchanged. */
+@supports (-webkit-touch-callout:none){
+  input,select,textarea{font-size:16px!important}
+}
+@media (max-width: 900px){
+  html{width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{width:100%;min-width:0;overflow-x:hidden;overscroll-behavior-x:none}
+  .shell,header,.layout,.main,.side,.card,.maphead,.top-navigation,.scene6-layout,.dual-viz,.dual-pane{min-width:0;max-width:100%;box-sizing:border-box}
+  .layout{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+  .layout>.main,.layout>.side{width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important}
+  .side.scene6-side,.side.scene6-side #filterSection,.side.scene6-side #summarySection{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important}
+  .dual-viz{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+  .dual-pane{width:100%!important;min-width:0!important}
+  #viz,#vizGeo,#vizTsne,.dual-pane svg{display:block;max-width:100%!important;width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:850 / 760}
+  .top-navigation>.progress{min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+  .top-navigation .step{flex-shrink:0;min-height:44px}
+  button,select,input[type=checkbox],input[type=range]{touch-action:manipulation}
+  button,.btn,.nav button{min-height:42px}
+  .cluster-province-popover,#tip{max-width:calc(100vw - 20px)!important}
+}
+@media (max-width: 600px){
+  header{padding:14px 12px!important}
+  .shell{padding-left:8px!important;padding-right:8px!important}
+  .main,.side{padding:11px!important}
+  .top-navigation{grid-template-columns:40px minmax(0,1fr) 40px!important}
+  .top-navigation>.progress{min-width:0!important}
+  .top-navigation .step{min-width:115px!important;max-width:125px!important}
+  .maphead,.controls,.btnrow{max-width:100%}
+  .maphead>*{min-width:0}
+  .field,select,input{min-width:0}
+  .standard-cluster-labels,.scene6-cluster-labels{max-width:100%;min-width:0}
+  .cluster-name-title,.scene6-cluster-name{overflow-wrap:anywhere}
+  .legend{overflow-wrap:anywhere}
+  .tooltip{max-width:calc(100vw - 20px)!important}
+}
+
+/* Respect scene visibility on mobile: the shared chart must remain hidden in Scene 6. */
+#viz.hidden, #scene6Dual.hidden { display:none!important; }
 </style></head><body>
 <header><div class="header-creators" aria-label="รายชื่อผู้จัดทำ"><div class="creators-heading">ผู้จัดทำ</div><div>6980173426 ธนานันต์ สุวรกุล</div><div>6980430726 สุพิชชา เลาวณาภิบาล</div><div>6980425626 สุธาทิพย์ มณีกาญจน์</div><div>6980109326 ณัชชา บุญธนากร</div><div>6980184326 ธันยวีร์ ชินสุวรรณ</div><div>6980273526 พรนัชชา แก้วปาน</div></div><div><div class="eyebrow">BEYOND THE BALLOT  /  ข้อมูลการเลือกตั้งปี2569</div><h1>ผลการเลือกตั้งซ่อนอะไรเรา?</h1><p class="hero-subtitle">เจาะลึกเบื้องหลังคูหา: เมื่อโครงสร้างทางสังคมและเศรษฐกิจ อาจเป็นคำตอบของแผนที่การเมืองไทย</p></div></header>
 <div class="shell"><div class="top-navigation"><div class="nav nav-top"><button id="back" type="button" aria-label="ซีนก่อนหน้า" title="ซีนก่อนหน้า">&#8592;</button></div><div class="progress" id="steps"></div><div class="nav nav-top"><button id="next" type="button" aria-label="ซีนถัดไป" title="ซีนถัดไป">&#8594;</button></div></div><div class="layout"><main class="card main"><div class="maphead"><div><div class="eyebrow" id="maptype">ภาพรวมการเลือกตั้ง</div><h2 id="maptitle">ประเทศไทยผ่านผลการเลือกตั้ง</h2></div><div id="ballotSwitch" class="ballotSwitch hidden" role="group" aria-label="รูปแบบผลเลือกตั้ง"><label class="ballotOption"><input type="radio" name="ballotType" value="list" checked><span>บัญชีรายชื่อ</span></label><label class="ballotOption"><input type="radio" name="ballotType" value="constituency"><span>แบ่งเขต</span></label></div></div><div id="standardClusterLabels" class="standard-cluster-labels" aria-label="รายชื่อกลุ่มจังหวัด"></div><svg id="viz" viewBox="0 0 850 760" aria-label="แผนภาพ 77 จังหวัด"></svg><div id="scene6Dual" class="scene6-layout hidden"><div id="scene6ClusterLabels" class="scene6-cluster-labels" aria-label="รายชื่อกลุ่มจังหวัด"></div><div class="dual-viz"><div class="dual-pane"><div class="dual-pane-head"><h3>แผนที่ภูมิศาสตร์ (Geographic Map)</h3><div class="eyebrow">ตำแหน่งจังหวัดตามภูมิศาสตร์ · สีตามพรรคอันดับหนึ่ง</div></div><svg id="vizGeo" viewBox="0 0 850 760" aria-label="แผนที่ภูมิศาสตร์ 77 จังหวัด"></svg></div><div class="dual-pane"><div class="dual-pane-head"><h3 id="vizTsneEyebrow">การจัดกลุ่มตามตัวชี้วัด (t-SNE Embedding)</h3><div class="eyebrow" id="vizTsneTitle">ลากเมาส์คลุมจุด (Brush) เพื่อเปรียบเทียบตำแหน่งบนแผนที่</div></div><svg id="vizTsne" viewBox="0 0 850 760" aria-label="แผนภาพ t-SNE 77 จังหวัด"></svg></div></div></div><div class="legend" id="legend"></div></main>
@@ -387,6 +530,8 @@ const factorGroups=[['demographic','ลักษณะประชากร'],['
 const allKeys=factorGroups.flatMap(g=>DATA.groups[g[0]]);
 let highestUnlockedScene=0;
 let scene=0,mode='geo',selected=new Set(),K=4,perplexity=25,seed=42,embedding=null,clusters=null,chosen=null,analysisSignature='',busy=false;
+const sceneClusterPresets=new Map();
+let matchedScenePreset=null;
 const customClusterNames={};
 const editingClusterNames=new Set();
 const FIXED_SEED=42;
@@ -435,78 +580,7 @@ function fit(coords,mode){let xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]),minX
 // Display-only collision avoidance: preserve t-SNE and K-means calculations.
 // Place all circle centres at least 24px apart; leave the top label band clear.
 function separateOverlappingDots(input){
- const pts=input.map(p=>[p[0],p[1]]);
- if(!clusters||!K||K<=1)return pts;
- const n=pts.length,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
- for(let pass=0;pass<4;pass++){
-  const {allAddedSegs,ownIdxByCluster,find}=buildClusterSkeletons(pts,clusters,K);
-  let anyDisconnected=false;
-  for(let c=0;c<K;c++){
-   const ownGlobalIds=ownIdxByCluster[c];
-   if(ownGlobalIds.length<=1)continue;
-   const compMap=new Map();
-   for(let li=0;li<ownGlobalIds.length;li++){
-    const r=find(c,li);
-    if(!compMap.has(r))compMap.set(r,[]);
-    compMap.get(r).push(ownGlobalIds[li]);
-   }
-   if(compMap.size<=1)continue;
-   anyDisconnected=true;
-   const comps=[...compMap.values()].sort((a,b)=>{
-    if(b.length!==a.length)return b.length-a.length;
-    const spread=arr=>{let s=0;for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)s+=Math.hypot(pts[arr[i]][0]-pts[arr[j]][0],pts[arr[i]][1]-pts[arr[j]][1]);return s};
-    return spread(a)-spread(b);
-   });
-   const mainIds=[...comps[0]],strandedIds=[];
-   for(let ci=1;ci<comps.length;ci++)for(const id of comps[ci])strandedIds.push(id);
-   strandedIds.sort((a,b)=>{
-    const da=Math.min(...mainIds.map(m=>Math.hypot(pts[a][0]-pts[m][0],pts[a][1]-pts[m][1])));
-    const db=Math.min(...mainIds.map(m=>Math.hypot(pts[b][0]-pts[m][0],pts[b][1]-pts[m][1])));
-    return da-db;
-   });
-   for(const id of strandedIds){
-    const ox=pts[id][0],oy=pts[id][1];
-    const anchors=[...mainIds].sort((a,b)=>Math.hypot(pts[a][0]-ox,pts[a][1]-oy)-Math.hypot(pts[b][0]-ox,pts[b][1]-oy));
-    let placed=false;
-    for(const [minF,minOwn,minSeg] of [[24,18,16],[20,15,14],[16,12,12]]){
-     if(placed)break;
-     let bestCand=null,bestScore=Infinity;
-     for(const anchor of anchors){
-      const ax=pts[anchor][0],ay=pts[anchor][1],baseAng=Math.atan2(oy-ay,ox-ax);
-      for(const r of [24,30,36,42,50,58,68,80]){
-       for(let stepA=0;stepA<36;stepA++){
-        const delta=(stepA===0?0:(stepA%2===1?1:-1)*Math.ceil(stepA/2))*(Math.PI/18);
-        const ang=baseAng+delta,nx=clamp(ax+Math.cos(ang)*r,30,820),ny=clamp(ay+Math.sin(ang)*r,90,732);
-        let ok=true;
-        for(let k=0;k<n;k++){
-         if(k===id||(strandedIds.includes(k)&&!mainIds.includes(k)))continue;
-         const d=Math.hypot(nx-pts[k][0],ny-pts[k][1]);
-         if(clusters[k]!==c){if(d<minF||distToSeg(pts[k][0],pts[k][1],ax,ay,nx,ny)<minSeg){ok=false;break}}
-         else if(d<minOwn){ok=false;break}
-        }
-        if(!ok)continue;
-        for(const s of allAddedSegs){
-         if(s.c===c)continue;
-         if(segsIntersect(ax,ay,nx,ny,s.ax,s.ay,s.bx,s.by)||distToSeg(nx,ny,s.ax,s.ay,s.bx,s.by)<minSeg||distToSeg(s.ax,s.ay,ax,ay,nx,ny)<minSeg||distToSeg(s.bx,s.by,ax,ay,nx,ny)<minSeg||distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by)<minSeg){ok=false;break}
-        }
-        if(!ok)continue;
-        const score=Math.hypot(nx-ox,ny-oy)+Math.abs(delta)*12+r*0.3;
-        if(score<bestScore){bestScore=score;bestCand={nx,ny,ax,ay}}
-       }
-      }
-     }
-     if(bestCand){
-      pts[id][0]=bestCand.nx;pts[id][1]=bestCand.ny;
-      mainIds.push(id);
-      allAddedSegs.push({c,ax:bestCand.ax,ay:bestCand.ay,bx:bestCand.nx,by:bestCand.ny});
-      placed=true;
-     }
-    }
-   }
-  }
-  if(!anyDisconnected)break;
- }
- return pts;
+ return input.map(p=>[p[0],p[1]]);
  // # const original=input.map(p=>[p[0],p[1]]),points=input.map(p=>[p[0],p[1]]);
  // # const minGap=24,margin=27,left=margin,right=850-margin,top=207,bottom=760-margin;
  // # const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -776,6 +850,7 @@ function clearClusterDescription(label,z,key){
 }
 
 function autoClusterNames(){
+ if(scene===5&&matchedScenePreset&&matchedScenePreset.names&&matchedScenePreset.names.length===K)return matchedScenePreset.names.slice();
  // Describe each group using a distinct characteristic where possible.
  const keys=[...selected];
  if(!clusters||!keys.length)return Array.from({length:K},(_,c)=>'กลุ่ม '+displayClusterNumber(c));
@@ -842,81 +917,76 @@ function hull(points){
  for(let i=a.length-1;i>=0;i--){const p=a[i];while(up.length>1&&cross(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}
  lo.pop();up.pop();return lo.concat(up);
 }
-function buildClusterSkeletons(coords,clusters,K){
- const allAddedSegs=[],skeletons=Array.from({length:K},()=>[]);
- const ownIdxByCluster=Array.from({length:K},()=>[]),ownByCluster=Array.from({length:K},()=>[]),foreignByCluster=Array.from({length:K},()=>[]);
- for(let i=0;i<coords.length;i++){
-  const c=clusters[i];
-  if(c>=0&&c<K){ownIdxByCluster[c].push(i);ownByCluster[c].push(coords[i])}
-  for(let c2=0;c2<K;c2++)if(c2!==c)foreignByCluster[c2].push(coords[i]);
- }
- const parentByCluster=Array.from({length:K},(_,c)=>ownByCluster[c].map((_,i)=>i));
- const find=(c,i)=>{const p=parentByCluster[c];return p[i]===i?i:(p[i]=find(c,p[i]))};
- const union=(c,i,j)=>{const ri=find(c,i),rj=find(c,j);if(ri!==rj){parentByCluster[c][ri]=rj;return true}return false};
- const seenSeg=Array.from({length:K},()=>new Set());
- const addSeg=(c,ax,ay,bx,by)=>{
-  const k1=Math.round(ax)+","+Math.round(ay)+"-"+Math.round(bx)+","+Math.round(by);
-  const k2=Math.round(bx)+","+Math.round(by)+"-"+Math.round(ax)+","+Math.round(ay);
-  if(seenSeg[c].has(k1)||seenSeg[c].has(k2))return;
-  seenSeg[c].add(k1);
-  skeletons[c].push({ax,ay,bx,by,minX:Math.min(ax,bx),maxX:Math.max(ax,bx),minY:Math.min(ay,by),maxY:Math.max(ay,by)});
-  allAddedSegs.push({c,ax,ay,bx,by});
- };
- const segClearance=(c,ax,ay,bx,by)=>{
-  let m=Infinity;
-  for(const [fx,fy] of foreignByCluster[c])m=Math.min(m,distToSeg(fx,fy,ax,ay,bx,by));
-  for(const s of allAddedSegs){
-   if(s.c===c)continue;
-   if(segsIntersect(ax,ay,bx,by,s.ax,s.ay,s.bx,s.by))return 0;
-   m=Math.min(m,distToSeg(s.ax,s.ay,ax,ay,bx,by),distToSeg(s.bx,s.by,ax,ay,bx,by),distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by),distToSeg(bx,by,s.ax,s.ay,s.bx,s.by));
-  }
-  return m;
- };
- const globalEdges=[];
- for(let c=0;c<K;c++){
-  const own=ownByCluster[c];
-  for(const [x,y] of own)skeletons[c].push({ax:x,ay:y,bx:x,by:y,minX:x,maxX:x,minY:y,maxY:y});
-  for(let i=0;i<own.length;i++)for(let j=i+1;j<own.length;j++)globalEdges.push({c,i,j,d:Math.hypot(own[i][0]-own[j][0],own[i][1]-own[j][1])});
- }
- globalEdges.sort((a,b)=>a.d-b.d);
- for(const e of globalEdges){
-  if(e.d>=260||find(e.c,e.i)===find(e.c,e.j))continue;
-  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
-  if(segClearance(e.c,ax,ay,bx,by)>=15){addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j)}
- }
- for(const e of globalEdges){
-  if(e.d>480||find(e.c,e.i)===find(e.c,e.j))continue;
-  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
-  if(segClearance(e.c,ax,ay,bx,by)>=14){addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j);continue}
-  if(e.d<1e-6)continue;
-  const mx=(ax+bx)/2,my=(ay+by)/2,ux=-(by-ay)/e.d,uy=(bx-ax)/e.d;
-  let bestPts=null,bestClear=13.5;
-  for(const off of [24,-24,42,-42,62,-62,84,-84,108,-108,136,-136,168,-168,205,-205]){
-   const cx=mx+ux*off,cy=my+uy*off;
-   if(cx<18||cx>832||cy<76||cy>742)continue;
-   const ptsB=[];
-   for(let t=0;t<=8;t++){const s=t/8,u=1-s;ptsB.push([u*u*ax+2*u*s*cx+s*s*bx,u*u*ay+2*u*s*cy+s*s*by])}
-   let cMin=Infinity;
-   for(let s=0;s<8;s++)cMin=Math.min(cMin,segClearance(e.c,ptsB[s][0],ptsB[s][1],ptsB[s+1][0],ptsB[s+1][1]));
-   if(cMin>bestClear){bestClear=cMin;bestPts=ptsB;break}
-  }
-  if(bestPts){for(let s=0;s<bestPts.length-1;s++)addSeg(e.c,bestPts[s][0],bestPts[s][1],bestPts[s+1][0],bestPts[s+1][1]);union(e.c,e.i,e.j)}
- }
- const degByCluster=Array.from({length:K},(_,c)=>new Int32Array(ownByCluster[c].length));
- for(const e of globalEdges){
-  if(e.d>160)continue;
-  const deg=degByCluster[e.c];
-  if(deg[e.i]>=4||deg[e.j]>=4)continue;
-  const own=ownByCluster[e.c],[ax,ay]=own[e.i],[bx,by]=own[e.j];
-  if(segClearance(e.c,ax,ay,bx,by)<16)continue;
-  const mx=(ax+bx)/2,my=(ay+by)/2,rad=e.d/2;
-  if(foreignByCluster[e.c].some(([fx,fy])=>Math.hypot(fx-mx,fy-my)<rad*0.85))continue;
-  addSeg(e.c,ax,ay,bx,by);union(e.c,e.i,e.j);deg[e.i]++;deg[e.j]++;
- }
- return {skeletons,allAddedSegs,ownIdxByCluster,find};
-}
 function extractClusterPolygons(coords,clusters,K){
- const {skeletons}=buildClusterSkeletons(coords,clusters,K);
+ const allAddedSegs=[];
+ const clusterOrder=Array.from({length:K},(_,c)=>c).sort((a,b)=>{
+  const ca=coords.filter((_,i)=>clusters[i]===a).length;
+  const cb=coords.filter((_,i)=>clusters[i]===b).length;
+  return ca-cb;
+ });
+ const skeletons=Array.from({length:K},()=>[]);
+ for(const c of clusterOrder){
+  const own=coords.filter((_,i)=>clusters[i]===c);
+  const foreign=coords.filter((_,i)=>clusters[i]!==c);
+  const segs=own.map(([x,y])=>({ax:x,ay:y,bx:x,by:y,minX:x,maxX:x,minY:y,maxY:y}));
+  skeletons[c]=segs;
+  if(own.length<=1)continue;
+  const edges=[];
+  for(let i=0;i<own.length;i++)for(let j=i+1;j<own.length;j++)edges.push({i,j,d:Math.hypot(own[i][0]-own[j][0],own[i][1]-own[j][1])});
+  edges.sort((a,b)=>a.d-b.d);
+  const segClearance=(ax,ay,bx,by)=>{
+   let m=Infinity;
+   for(const [fx,fy] of foreign)m=Math.min(m,distToSeg(fx,fy,ax,ay,bx,by));
+   for(const s of allAddedSegs){
+    if(s.c===c)continue;
+    if(segsIntersect(ax,ay,bx,by,s.ax,s.ay,s.bx,s.by))return 0;
+    m=Math.min(m,distToSeg(s.ax,s.ay,ax,ay,bx,by),distToSeg(s.bx,s.by,ax,ay,bx,by),distToSeg(ax,ay,s.ax,s.ay,s.bx,s.by),distToSeg(bx,by,s.ax,s.ay,s.bx,s.by));
+   }
+   return m;
+  };
+  const parent=own.map((_,i)=>i),find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  const union=(i,j)=>{const ri=find(i),rj=find(j);if(ri!==rj){parent[ri]=rj;return true}return false};
+  const seenSeg=new Set();
+  const addSeg=(ax,ay,bx,by)=>{
+   const k1=Math.round(ax)+","+Math.round(ay)+"-"+Math.round(bx)+","+Math.round(by);
+   const k2=Math.round(bx)+","+Math.round(by)+"-"+Math.round(ax)+","+Math.round(ay);
+   if(seenSeg.has(k1)||seenSeg.has(k2))return;
+   seenSeg.add(k1);
+   segs.push({ax,ay,bx,by,minX:Math.min(ax,bx),maxX:Math.max(ax,bx),minY:Math.min(ay,by),maxY:Math.max(ay,by)});
+   allAddedSegs.push({c,ax,ay,bx,by});
+  };
+  for(const e of edges){
+   if(find(e.i)===find(e.j))continue;
+   const [ax,ay]=own[e.i],[bx,by]=own[e.j],clear=segClearance(ax,ay,bx,by);
+   if(clear>=15&&e.d<280){addSeg(ax,ay,bx,by);union(e.i,e.j)}
+  }
+  const deg=new Int32Array(own.length);
+  for(const e of edges){
+   if(e.d>160||deg[e.i]>=4||deg[e.j]>=4)continue;
+   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
+   if(segClearance(ax,ay,bx,by)<16)continue;
+   const mx=(ax+bx)/2,my=(ay+by)/2,rad=e.d/2;
+   if(foreign.some(([fx,fy])=>Math.hypot(fx-mx,fy-my)<rad*0.85))continue;
+   addSeg(ax,ay,bx,by);union(e.i,e.j);deg[e.i]++;deg[e.j]++;
+  }
+  for(const e of edges){
+   if(find(e.i)===find(e.j)||e.d>450)continue;
+   const [ax,ay]=own[e.i],[bx,by]=own[e.j];
+   if(segClearance(ax,ay,bx,by)>=13.5){addSeg(ax,ay,bx,by);union(e.i,e.j);continue}
+   const mx=(ax+bx)/2,my=(ay+by)/2,ux=-(by-ay)/e.d,uy=(bx-ax)/e.d;
+   let bestPts=null,bestClear=13;
+   for(const off of [24,-24,42,-42,62,-62,84,-84,108,-108,136,-136,168,-168]){
+    const cx=mx+ux*off,cy=my+uy*off;
+    if(cx<18||cx>832||cy<80||cy>742)continue;
+    const ptsB=[];
+    for(let t=0;t<=6;t++){const s=t/6,u=1-s;ptsB.push([u*u*ax+2*u*s*cx+s*s*bx,u*u*ay+2*u*s*cy+s*s*by])}
+    let cMin=Infinity;
+    for(let s=0;s<6;s++)cMin=Math.min(cMin,segClearance(ptsB[s][0],ptsB[s][1],ptsB[s+1][0],ptsB[s+1][1]));
+    if(cMin>bestClear){bestClear=cMin;bestPts=ptsB;break}
+   }
+   if(bestPts){for(let s=0;s<bestPts.length-1;s++)addSeg(bestPts[s][0],bestPts[s][1],bestPts[s+1][0],bestPts[s+1][1]);union(e.i,e.j)}
+  }
+ }
  const step=6,cols=Math.ceil(850/step)+1,rowsG=Math.ceil(760/step)+1;
  const distGrid=Array.from({length:K},()=>new Float32Array(cols*rowsG));
  for(let c=0;c<K;c++){
@@ -1088,6 +1158,7 @@ function clusterOverlay(layer,coords){
   });
   layer.append(path);
   if(isTsnePane)tsneHulls.push({c,rings});
+
  }
 }
 
@@ -1175,22 +1246,54 @@ function renderScene1Summary(){
 
 function draw(){$('tip').style.display='none';drawMap();renderStandardClusterLabels();if(scene===5)alignScene6ChartTops();drawAnalysis();renderScene1Summary()}
 const filterLabels={"voters_not_came_rate_zscore":"ผู้ไม่มาใช้สิทธิเลือกตั้ง","invalid_party_list_rate_zscore":"บัตรเสียแบบบัญชีรายชื่อ","invalid_constituency_rate_zscore":"บัตรเสียแบบแบ่งเขต","households_without_internet_rate_zscore":"ครัวเรือนที่ไม่มีอินเทอร์เน็ต","median_equivalised_monthly_household_income_zscore":"รายได้ครัวเรือนต่อเดือน","poverty_headcount_ratio_zscore":"ประชากรที่มีรายได้น้อย","equivalised_income_gini_zscore":"ความแตกต่างของรายได้","household_debt_to_monthly_income_ratio_zscore":"ภาระหนี้ครัวเรือนเทียบกับรายได้","employment_yoy_change_rate_zscore":"การเปลี่ยนแปลงการจ้างงาน","agriculture_gpp_share_zscore":"เศรษฐกิจภาคเกษตร","manufacturing_gpp_share_zscore":"เศรษฐกิจภาคอุตสาหกรรม","urban_population_z_score":"ประชากรที่อาศัยในเขตเมือง","population_age_60_plus_z_score":"ประชากรอายุ 60 ปีขึ้นไป","population_change_z_score":"การเปลี่ยนแปลงจำนวนประชากร","skip_generation_households_z_score":"ครัวเรือนที่ผู้สูงอายุอาศัยกับหลาน","higher_edu_zscore":"ผู้สำเร็จการศึกษาระดับอุดมศึกษา","poverty_zscore":"ประชากรที่มีข้อจำกัดด้านการศึกษา","nfe_zscore":"ผู้เรียนการศึกษานอกระบบ","no_higher_edu_zscore":"ผู้ที่ไม่ได้ศึกษาต่อระดับอุดมศึกษา"};
-function factorsUI(){let host=$('factors');host.replaceChildren();factorGroups.forEach(([group,title])=>{let column=document.createElement('div');column.className='factor-category';let h=document.createElement('div');h.className='groupname';h.textContent=title;column.append(h);DATA.groups[group].forEach(key=>{let label=document.createElement('label');label.className='factor';let box=document.createElement('input');box.type='checkbox';box.checked=selected.has(key);box.onchange=()=>{box.checked?selected.add(key):selected.delete(key);if(selected.size)$('clusterAccordion').open=true;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัดที่เลือก · แสดง Tile Grid Map อัตโนมัติ';draw()}else calculate()};label.append(box,document.createTextNode(filterLabels[key]||DATA.labels[key]));column.append(label)});host.append(column)})}
+function factorsUI(){let host=$('factors');host.replaceChildren();factorGroups.forEach(([group,title])=>{let column=document.createElement('div');column.className='factor-category';let h=document.createElement('div');h.className='groupname';h.textContent=title;column.append(h);DATA.groups[group].forEach(key=>{let label=document.createElement('label');label.className='factor';let box=document.createElement('input');box.type='checkbox';box.checked=selected.has(key);box.onchange=()=>{box.checked?selected.add(key):selected.delete(key);if(selected.size)$('clusterAccordion').open=true;if(scene===5)syncMatchingScenePreset();if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัดที่เลือก · แสดง Tile Grid Map อัตโนมัติ';draw()}else calculate()};label.append(box,document.createTextNode(filterLabels[key]||DATA.labels[key]));column.append(label)});host.append(column)})}
 function chooseKeys(){let key=scenes[scene][3];selected=new Set(key==='all'?allKeys:DATA.groups[key]);factorsUI()}
 function go(i){
  i=Math.max(0,Math.min(5,i));
  if(i>highestUnlockedScene)return;
- scene=i;chosen=null;clearBrush();
+ scene=i;matchedScenePreset=null;chosen=null;clearBrush();
  $('title').textContent=scenes[scene][0];$('story').textContent=scenes[scene][1];
  $('back').disabled=scene===0;$('next').disabled=scene===5;document.querySelectorAll('.step').forEach((b,j)=>{b.classList.toggle('active',j===scene);b.disabled=j>highestUnlockedScene;b.setAttribute('aria-current',j===scene?'step':'false');b.title=j>highestUnlockedScene?'กด ถัดไป เพื่อปลดล็อก Scene นี้':''});
+ // Keep the active scene tab visible in the horizontally scrolling navigation.
+ requestAnimationFrame(()=>{
+  const rail=$('steps');
+  const active=rail?.querySelector('.step.active');
+  if(!rail||!active||rail.scrollWidth<=rail.clientWidth+1)return;
+  const target=active.offsetLeft-rail.offsetLeft-(rail.clientWidth-active.offsetWidth)/2;
+  rail.scrollTo({left:Math.max(0,Math.min(target,rail.scrollWidth-rail.clientWidth)),behavior:'smooth'});
+ });
  const free=scene===5;$('viz').classList.toggle('hidden',free);$('scene6Dual').classList.toggle('hidden',!free);document.querySelector('.side').classList.toggle('scene6-side',free);document.getElementById('filterSection').classList.toggle('scene6-inactive',!free);document.getElementById('summarySection').classList.toggle('scene6-inactive',!free);document.querySelector('.cluster-slider-full').classList.toggle('hidden',!free);$('exploreControls').classList.toggle('hidden',!free);$('ballotSwitch').classList.toggle('hidden',!free);$('clusterAccordion').classList.toggle('hidden',scene===0);$('clusterAccordion').open=!free;if(free){$('exploreControls').open=true;}
 
  if(scene===0){selected=new Set();embedding=null;mode='geo';$('status').textContent='Election Overview · Tile Grid Map';draw();return}
  if(free){selected=new Set();embedding=null;mode='geo';factorsUI();$('status').textContent='เลือก Checkbox เพื่อคำนวณ t-SNE · หากไม่เลือกจะแสดง Tile Grid Map';draw();return}
  selected=new Set(DATA.groups[scenes[scene][3]]);mode='tsne';calculate();
 }
-function csvExport(){let head=['province_code','province_name_th','nesdc_region_name_th','party_name_th','cluster','tsne_x','tsne_y',...selected],line=[head.join(',')];rows.forEach((d,i)=>{let fields=[d.province_code,d.province_name_th,d.nesdc_region_name_th,d.party_name_th,(clusters?.[i]??0)+1,embedding?.[i]?.[0]??'',embedding?.[i]?.[1]??'',...[...selected].map(k=>d[k])];line.push(fields.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))});let blob=new Blob(['\ufeff'+line.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='election_2569_tsne_clusters.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix(allKeys.filter(k=>selected.has(k)));perplexity=25;seed=FIXED_SEED;const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}else{K=Number(choice);clusters=kmeans(X,K,seed)};embedding=tsne(X,perplexity,seed);mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 1000 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
+function indicatorSignature(keys){
+ return [...keys].sort().join('|');
+}
+function syncMatchingScenePreset(){
+ matchedScenePreset=null;
+ if(scene!==5||!selected.size)return;
+ const signature=indicatorSignature(selected);
+ const preset=sceneClusterPresets.get(signature);
+ if(!preset)return;
+ matchedScenePreset=preset;
+ const field=$('clusterK');
+ field.value=String(preset.k);
+ $('clusterKValue').textContent=preset.k+' กลุ่ม';
+ if(typeof syncClusterStepper==='function')syncClusterStepper();
+}
+function csvExport(){let head=['province_code','province_name_th','nesdc_region_name_th','party_name_th','cluster','tsne_x','tsne_y',...selected],line=[head.join(',')];rows.forEach((d,i)=>{let fields=[d.province_code,d.province_name_th,d.nesdc_region_name_th,d.party_name_th,clusters?displayClusterNumber(clusters[i]):"",embedding?.[i]?.[0]??'',embedding?.[i]?.[1]??'',...[...selected].map(k=>d[k])];line.push(fields.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))});let blob=new Blob(['\ufeff'+line.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='election_2569_tsne_clusters.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+async function calculate(){if(busy)return;if(!selected.size){mode='geo';embedding=null;$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map';draw();return}busy=true;$('status').textContent='กำลังคำนวณ t-SNE 77 จังหวัด…';await new Promise(resolve=>setTimeout(resolve,35));try{const X=standardMatrix([...selected]);perplexity=25;seed=FIXED_SEED;
+const choice=scene===3?'4':(scene===4?'5':(scene===5?$('clusterK').value:'auto'));
+if(scene===5&&matchedScenePreset&&Number(choice)===matchedScenePreset.k){
+ K=matchedScenePreset.k;clusters=matchedScenePreset.labels.slice();
+}else if(choice==='auto'){const auto=autoClusters(X,seed);K=auto.k;clusters=auto.labels}
+else{K=Number(choice);clusters=kmeans(X,K,seed)}
+embedding=tsne(X,perplexity,seed);
+if(scene>=1&&scene<=4){
+ sceneClusterPresets.set(indicatorSignature(selected),{k:K,labels:clusters.slice(),names:autoClusterNames().slice()});
+}mode='tsne';$('status').textContent='คำนวณสำเร็จ · '+selected.size+' ตัวชี้วัด · t-SNE 1000 iterations · K-means '+K+' กลุ่ม';draw()}catch(e){$('status').textContent='ไม่สามารถคำนวณได้: '+e.message}finally{busy=false;if($('calculate'))$('calculate').disabled=false}}
 function positionChartTooltip(t,e){
   // Compact, left-opening tooltip, matching the first scene's hover cards.
   const margin=12, gap=12;
@@ -1214,7 +1317,7 @@ function positionChartTooltip(t,e){
 function showProvinceTooltip(d,i,e){
  if(brush.active)return;
  const t=$('tip');t.style.display='block';
- t.textContent=d.province_name_th+'\nพรรคอันดับหนึ่ง ('+ballotLabel()+'): '+winningParty(d)+(mode==='tsne'&&clusters?'\nCluster '+(clusters[i]+1)+' · '+clusterName(clusters[i]):'')+'\n'+rawSummary(d,5);
+ t.textContent=d.province_name_th+'\nพรรคอันดับหนึ่ง ('+ballotLabel()+'): '+winningParty(d)+(mode==='tsne'&&clusters?'\nCluster '+displayClusterNumber(clusters[i])+' · '+clusterName(clusters[i]):'')+'\n'+rawSummary(d,5);
  positionChartTooltip(t,e);
 }
 function setupIntro(){const overlay=$('tsneIntro'),btn=$('introStart');if(!overlay||!btn)return;const dismiss=()=>{overlay.classList.add('hidden');document.body.style.overflow='';};document.body.style.overflow='hidden';btn.addEventListener('click',dismiss);btn.focus();}
@@ -1228,6 +1331,11 @@ rows.forEach((d,i)=>{
  circle.onclick=()=>{chosen=i;draw()};
  circle.onmousemove=e=>showProvinceTooltip(d,i,e);
  circle.onmouseleave=()=>$('tip').style.display='none';
+ circle.addEventListener('touchend',e=>{
+  if(e.changedTouches.length!==1)return;
+  const t=e.changedTouches[0];
+  showProvinceTooltip(d,i,{clientX:t.clientX,clientY:t.clientY});
+ },{passive:true});
  svg.append(circle);
 
  let cGeo=el('circle',{id:'pGeo'+d.province_code,class:'point',r:12,fill:partyColor(d.party_name_th)});
@@ -1235,6 +1343,11 @@ rows.forEach((d,i)=>{
  cGeo.onclick=()=>{chosen=i;draw()};
  cGeo.onmousemove=e=>showProvinceTooltip(d,i,e);
  cGeo.onmouseleave=()=>$('tip').style.display='none';
+ cGeo.addEventListener('touchend',e=>{
+  if(e.changedTouches.length!==1)return;
+  const t=e.changedTouches[0];
+  showProvinceTooltip(d,i,{clientX:t.clientX,clientY:t.clientY});
+ },{passive:true});
  svgGeo.append(cGeo);
 
  let cTsne=el('circle',{id:'pTsne'+d.province_code,class:'point',r:12,fill:partyColor(d.party_name_th)});
@@ -1242,6 +1355,11 @@ rows.forEach((d,i)=>{
  cTsne.onclick=()=>{if(brush.moved)return;chosen=i;draw()};
  cTsne.onmousemove=e=>showProvinceTooltip(d,i,e);
  cTsne.onmouseleave=()=>$('tip').style.display='none';
+ cTsne.addEventListener('touchend',e=>{
+  if(e.changedTouches.length!==1||brush.moved)return;
+  const t=e.changedTouches[0];
+  showProvinceTooltip(d,i,{clientX:t.clientX,clientY:t.clientY});
+ },{passive:true});
  svgTsne.append(cTsne);
 });
 svgTsne.append(el('g',{id:'tsneClusterLabels'}));
@@ -1270,10 +1388,35 @@ svgTsne.addEventListener('mousemove',e=>{
  }
  updateGeoOpacity();
 });
+// Touch: drag horizontally to brush on the t-SNE chart; vertical swipes scroll the page.
+let touchBrushStart=null;
+svgTsne.addEventListener('touchstart',e=>{
+ if(e.touches.length!==1||e.target.closest('.cluster-label-hover'))return;
+ const t=e.touches[0];
+ touchBrushStart={x:t.clientX,y:t.clientY,engaged:false};
+},{passive:true});
+svgTsne.addEventListener('touchmove',e=>{
+ if(!touchBrushStart||e.touches.length!==1)return;
+ const t=e.touches[0];
+ const dx=t.clientX-touchBrushStart.x,dy=t.clientY-touchBrushStart.y;
+ if(!touchBrushStart.engaged){
+  if(Math.abs(dy)>Math.abs(dx)+8){touchBrushStart=null;return;}
+  if(Math.abs(dx)<9)return;
+  touchBrushStart.engaged=true;
+  const start=svgPoint(svgTsne,{clientX:touchBrushStart.x,clientY:touchBrushStart.y});
+  brush.active=true;brush.moved=true;
+  brush.x0=brush.x1=start.x;brush.y0=brush.y1=start.y;
+ }
+ if(e.cancelable)e.preventDefault();
+ const p=svgPoint(svgTsne,t);brush.x1=p.x;brush.y1=p.y;
+ $('tip').style.display='none';updateBrushUI();
+},{passive:false});
+svgTsne.addEventListener('touchend',()=>{if(touchBrushStart?.engaged)clearBrush();touchBrushStart=null},{passive:true});
+svgTsne.addEventListener('touchcancel',()=>{clearBrush();touchBrushStart=null},{passive:true});
 svgTsne.addEventListener('mouseup',()=>clearBrush());
 svgTsne.addEventListener('mouseleave',()=>{hoveredClusters.clear();clearBrush()});
 window.addEventListener('mouseup',()=>clearBrush());
-document.querySelectorAll('input[name="ballotType"]').forEach(el=>el.onchange=()=>draw());const updateClusterCount=delta=>{const field=$('clusterK');const value=Math.max(2,Math.min(6,Number(field.value)+delta));if(value===Number(field.value))return;field.value=String(value);$('clusterKValue').textContent=value+' กลุ่ม';syncClusterStepper();if(scene===5&&selected.size)calculate()};const syncClusterStepper=()=>{$('clusterKMinus').disabled=Number($('clusterK').value)<=2;$('clusterKPlus').disabled=Number($('clusterK').value)>=6};$('clusterKMinus').onclick=()=>updateClusterCount(-1);$('clusterKPlus').onclick=()=>updateClusterCount(1);syncClusterStepper();$('allFactors').onclick=()=>{selected=new Set(allKeys);$('clusterAccordion').open=true;factorsUI();calculate()};$('viewSummary').onclick=()=>{$('clusterAccordion').open=true;requestAnimationFrame(()=>{const side=document.querySelector('.side');const target=$('summarySection');if(scene===5&&window.innerWidth>1050){side.scrollTo({top:side.scrollTop+target.getBoundingClientRect().top-side.getBoundingClientRect().top-16,behavior:'smooth'});}else{target.scrollIntoView({behavior:'smooth',block:'start'});}});};$('clearFactors').onclick=()=>{selected.clear();embedding=null;mode='geo';factorsUI();$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map อัตโนมัติ';draw()};$('back').onclick=()=>go(scene-1);$('next').onclick=()=>{if(scene<5){highestUnlockedScene=Math.max(highestUnlockedScene,scene+1);go(scene+1)}};clusters=kmeans(standardMatrix(allKeys),K,seed);go(0)}
+document.querySelectorAll('input[name="ballotType"]').forEach(el=>el.onchange=()=>draw());const updateClusterCount=delta=>{const field=$('clusterK');const value=Math.max(2,Math.min(6,Number(field.value)+delta));if(value===Number(field.value))return;matchedScenePreset=null;field.value=String(value);$('clusterKValue').textContent=value+' กลุ่ม';syncClusterStepper();if(scene===5&&selected.size)calculate()};const syncClusterStepper=()=>{$('clusterKMinus').disabled=Number($('clusterK').value)<=2;$('clusterKPlus').disabled=Number($('clusterK').value)>=6};$('clusterKMinus').onclick=()=>updateClusterCount(-1);$('clusterKPlus').onclick=()=>updateClusterCount(1);syncClusterStepper();$('allFactors').onclick=()=>{selected=new Set(allKeys);$('clusterAccordion').open=true;factorsUI();calculate()};$('viewSummary').onclick=()=>{$('clusterAccordion').open=true;requestAnimationFrame(()=>{const side=document.querySelector('.side');const target=$('summarySection');if(scene===5&&window.innerWidth>1050){side.scrollTo({top:side.scrollTop+target.getBoundingClientRect().top-side.getBoundingClientRect().top-16,behavior:'smooth'});}else{target.scrollIntoView({behavior:'smooth',block:'start'});}});};$('clearFactors').onclick=()=>{selected.clear();embedding=null;mode='geo';factorsUI();$('status').textContent='ไม่มีตัวชี้วัด · แสดง Tile Grid Map อัตโนมัติ';draw()};$('back').onclick=()=>go(scene-1);$('next').onclick=()=>{if(scene<5){highestUnlockedScene=Math.max(highestUnlockedScene,scene+1);go(scene+1)}};clusters=kmeans(standardMatrix(allKeys),K,seed);go(0)}
 
 // Keep the Scene 6 right-hand card exactly as tall as the left-hand chart card.
 function syncScene6PanelHeight(){
